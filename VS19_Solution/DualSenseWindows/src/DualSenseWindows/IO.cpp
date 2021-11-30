@@ -202,13 +202,15 @@ DS5W_API DS5W_ReturnValue DS5W::initDeviceContext(DS5W::DeviceEnumInfo* ptrEnumI
 		}
 		
 		// The bluetooth input report is 78 Bytes long
-		reportLength = 547;
+		reportLength = 78;
 	}
 	else {
 		// The usb input report is 64 Bytes long
 		reportLength = 64;
 	}
-	
+
+	getCalibrationReport(ptrContext);
+
 	// Return OK
 	return DS5W_OK;
 }
@@ -298,10 +300,10 @@ DS5W_API DS5W_ReturnValue DS5W::getDeviceInputState(DS5W::DeviceContext* ptrCont
 	// Evaluete input buffer
 	if (ptrContext->_internal.connection == DS5W::DeviceConnection::BT) {
 		// Call bluetooth evaluator if connection is qual to BT
-		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidBuffer[2], ptrInputState);
+		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidBuffer[2], ptrInputState, ptrContext);
 	} else {
 		// Else it is USB so call its evaluator
-		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidBuffer[1], ptrInputState);
+		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidBuffer[1], ptrInputState, ptrContext);
 	}
 	
 	// Return ok
@@ -322,12 +324,12 @@ DS5W_API DS5W_ReturnValue DS5W::setDeviceOutputState(DS5W::DeviceContext* ptrCon
 	// Get otuput report length
 	unsigned short outputReportLength = 0;
 	if (ptrContext->_internal.connection == DS5W::DeviceConnection::BT) {
-		// The bluetooth input report is 547 Bytes long
-		outputReportLength = 547;
+		// The bluetooth output report is 78 Bytes long
+		outputReportLength = 78;
 	}
 	else {
-		// The usb input report is 48 Bytes long
-		outputReportLength = 48;
+		// The usb output report is 63 Bytes long
+		outputReportLength = 63;
 	}
 
 	// Cleat all input data
@@ -370,5 +372,43 @@ DS5W_API DS5W_ReturnValue DS5W::setDeviceOutputState(DS5W::DeviceContext* ptrCon
 	}
 
 	// OK 
+	return DS5W_OK;
+}
+
+DS5W_ReturnValue DS5W::getCalibrationReport(DS5W::DeviceContext* ptrContext)
+{
+	// Check pointer
+	if (!ptrContext) {
+		return DS5W_E_INVALID_ARGS;
+	}
+
+	// Check for connection
+	if (!ptrContext->_internal.connected) {
+		return DS5W_E_DEVICE_REMOVED;
+	}
+
+	// temp storage for report
+	unsigned char* data = new unsigned char[DS_FEATURE_REPORT_CALIBRATION_SIZE];
+
+	// set which report to read
+	data[0] = DS_FEATURE_REPORT_CALIBRATION;
+
+	if (!HidD_GetFeature(ptrContext->_internal.deviceHandle, data, DS_FEATURE_REPORT_CALIBRATION_SIZE)) {
+		// Close handle and set error state
+		CloseHandle(ptrContext->_internal.deviceHandle);
+		ptrContext->_internal.deviceHandle = NULL;
+		ptrContext->_internal.connected = false;
+
+		delete[] data;
+
+		// Return error
+		return DS5W_E_DEVICE_REMOVED;
+	}
+
+	// use calibration data to calculate constant values
+	__DS5W::Input::parseCalibrationData(ptrContext, (short*)(&data[1]));
+	
+	delete[] data;
+
 	return DS5W_OK;
 }

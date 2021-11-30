@@ -58,9 +58,9 @@ namespace DS5W {
 	/// 3 Component vector
 	/// </summary>
 	typedef struct _Vec3 {
-		short x;
-		short y;
-		short z;
+		int x;
+		int y;
+		int z;
 	} Vector3, Vec3;
 
 	/// <summary>

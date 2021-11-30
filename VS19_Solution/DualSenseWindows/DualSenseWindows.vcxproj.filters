@@ -42,6 +42,9 @@
     <ClInclude Include="src\DualSenseWindows\DS_CRC32.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="include\DualSenseWindows\DS5Reports.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DualSenseWindows\IO.cpp">

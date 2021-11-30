@@ -9,6 +9,8 @@
 */
 #pragma once
 
+#include <DualSenseWindows/DS5Reports.h>
+
 namespace DS5W {
 	/// <summary>
 	/// Enum for device connection type
@@ -67,6 +69,9 @@ namespace DS5W {
 			/// Connection of the device
 			/// </summary>
 			DeviceConnection connection;
+
+			CalibrationData accel_calib_data[3];
+			CalibrationData gyro_calib_data[3];
 
 			/// <summary>
 			/// Current state of connection

@@ -1,6 +1,13 @@
 #include "DS5_Input.h"
 
-void __DS5W::Input::evaluateHidInputBuffer(unsigned char* hidInBuffer, DS5W::DS5InputState* ptrInputState) {
+inline int mult_frac(int x, int numer, int denom)
+{
+	int quot = (x) / (denom);			
+	int rem = (x) % (denom);			
+	return (quot * (numer)) + ((rem * (numer)) / (denom));	
+}
+
+void __DS5W::Input::evaluateHidInputBuffer(unsigned char* hidInBuffer, DS5W::DS5InputState* ptrInputState, DS5W::DeviceContext* ptrContext) {
 	// Convert sticks to signed range
 	ptrInputState->leftStick.x = (char)(((short)(hidInBuffer[0x00] - 128)));
 	ptrInputState->leftStick.y = (char)(((short)(hidInBuffer[0x01] - 127)) * -1);
@@ -51,12 +58,36 @@ void __DS5W::Input::evaluateHidInputBuffer(unsigned char* hidInBuffer, DS5W::DS5
 		ptrInputState->buttonsAndDpad |= DS5W_ISTATE_DPAD_RIGHT | DS5W_ISTATE_DPAD_DOWN;
 		break;
 	}
+	
+	short raw_accelerometer[3];
+	short raw_gyroscope[3];
+	
+	memcpy(&raw_accelerometer, &hidInBuffer[0x0F], 2 * 3);
+	memcpy(&raw_gyroscope, &hidInBuffer[0x15], 2 * 3);
 
-	// Copy accelerometer readings
-	memcpy(&ptrInputState->accelerometer, &hidInBuffer[0x0F], 2 * 3);
+	ptrInputState->accelerometer.x = mult_frac(ptrContext->_internal.accel_calib_data[0].sens_numer,
+		raw_accelerometer[0] - ptrContext->_internal.accel_calib_data[0].bias,
+		ptrContext->_internal.accel_calib_data[0].sens_denom);
 
-	//TEMP: Copy gyro data (no processing currently done!)
-	memcpy(&ptrInputState->gyroscope, &hidInBuffer[0x15], 2 * 3);
+	ptrInputState->accelerometer.y = mult_frac(ptrContext->_internal.accel_calib_data[1].sens_numer,
+		raw_accelerometer[1] - ptrContext->_internal.accel_calib_data[1].bias,
+		ptrContext->_internal.accel_calib_data[1].sens_denom);
+
+	ptrInputState->accelerometer.z = mult_frac(ptrContext->_internal.accel_calib_data[2].sens_numer,
+		raw_accelerometer[2] - ptrContext->_internal.accel_calib_data[2].bias,
+		ptrContext->_internal.accel_calib_data[2].sens_denom);
+
+	ptrInputState->gyroscope.x = mult_frac(ptrContext->_internal.gyro_calib_data[0].sens_numer,
+		raw_gyroscope[0] - ptrContext->_internal.gyro_calib_data[0].bias,
+		ptrContext->_internal.gyro_calib_data[0].sens_denom);
+
+	ptrInputState->gyroscope.y = mult_frac(ptrContext->_internal.gyro_calib_data[1].sens_numer,
+		raw_gyroscope[1] - ptrContext->_internal.gyro_calib_data[1].bias,
+		ptrContext->_internal.gyro_calib_data[1].sens_denom);
+
+	ptrInputState->gyroscope.z = mult_frac(ptrContext->_internal.gyro_calib_data[2].sens_numer,
+		raw_gyroscope[2] - ptrContext->_internal.gyro_calib_data[2].bias,
+		ptrContext->_internal.gyro_calib_data[2].sens_denom);
 
 	// Evaluate touch state 1
 	UINT32 touchpad1Raw = *(UINT32*)(&hidInBuffer[0x20]);
@@ -83,6 +114,66 @@ void __DS5W::Input::evaluateHidInputBuffer(unsigned char* hidInBuffer, DS5W::DS5
 	ptrInputState->battery.chargin = (hidInBuffer[0x35] & 0x08);
 	ptrInputState->battery.fullyCharged = (hidInBuffer[0x36] & 0x20);
 	ptrInputState->battery.level = (hidInBuffer[0x36] & 0x0F);
+}
+
+void __DS5W::Input::parseCalibrationData(DS5W::DeviceContext* device, short* data)
+{
+	short gyro_pitch_bias = data[0];
+	short gyro_yaw_bias = data[1];
+	short gyro_roll_bias = data[2];
+	short gyro_pitch_plus = data[3];
+	short gyro_pitch_minus = data[4];
+	short gyro_yaw_plus = data[5];
+	short gyro_yaw_minus = data[6];
+	short gyro_roll_plus = data[7];
+	short gyro_roll_minus = data[8];
+	short gyro_speed_plus = data[9];
+	short gyro_speed_minus = data[10];
+	short acc_x_plus = data[11];
+	short acc_x_minus = data[12];
+	short acc_y_plus = data[13];
+	short acc_y_minus = data[14];
+	short acc_z_plus = data[15];
+	short acc_z_minus = data[16];
+
+	int speed_2x;
+	int range_2g;
+
+	/*
+	 * Set gyroscope calibration and normalization parameters.
+	 * Data values will be normalized to 1/DS_GYRO_RES_PER_DEG_S degree/s.
+	 */
+	speed_2x = (gyro_speed_plus + gyro_speed_minus);
+	device->_internal.gyro_calib_data[0].bias = gyro_pitch_bias;
+	device->_internal.gyro_calib_data[0].sens_numer = speed_2x * DS_GYRO_RES_PER_DEG_S;
+	device->_internal.gyro_calib_data[0].sens_denom = gyro_pitch_plus - gyro_pitch_minus;
+
+	device->_internal.gyro_calib_data[1].bias = gyro_yaw_bias;
+	device->_internal.gyro_calib_data[1].sens_numer = speed_2x * DS_GYRO_RES_PER_DEG_S;
+	device->_internal.gyro_calib_data[1].sens_denom = gyro_yaw_plus - gyro_yaw_minus;
+
+	device->_internal.gyro_calib_data[2].bias = gyro_roll_bias;
+	device->_internal.gyro_calib_data[2].sens_numer = speed_2x * DS_GYRO_RES_PER_DEG_S;
+	device->_internal.gyro_calib_data[2].sens_denom = gyro_roll_plus - gyro_roll_minus;
+
+	/*
+	 * Set accelerometer calibration and normalization parameters.
+	 * Data values will be normalized to 1/DS_ACC_RES_PER_G g.
+	 */
+	range_2g = acc_x_plus - acc_x_minus;
+	device->_internal.accel_calib_data[0].bias = acc_x_plus - range_2g / 2;
+	device->_internal.accel_calib_data[0].sens_numer = 2 * DS_ACC_RES_PER_G;
+	device->_internal.accel_calib_data[0].sens_denom = range_2g;
+
+	range_2g = acc_y_plus - acc_y_minus;
+	device->_internal.accel_calib_data[1].bias = acc_y_plus - range_2g / 2;
+	device->_internal.accel_calib_data[1].sens_numer = 2 * DS_ACC_RES_PER_G;
+	device->_internal.accel_calib_data[1].sens_denom = range_2g;
+
+	range_2g = acc_z_plus - acc_z_minus;
+	device->_internal.accel_calib_data[2].bias = acc_z_plus - range_2g / 2;
+	device->_internal.accel_calib_data[2].sens_numer = 2 * DS_ACC_RES_PER_G;
+	device->_internal.accel_calib_data[2].sens_denom = range_2g;
 }
 
 // for debugging with known values

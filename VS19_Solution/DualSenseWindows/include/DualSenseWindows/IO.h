@@ -78,4 +78,6 @@ namespace DS5W {
 	/// <param name="ptrOutputState">Pointer to output state to be set</param>
 	/// <returns>Result of call</returns>
 	extern "C" DS5W_API DS5W_ReturnValue setDeviceOutputState(DS5W::DeviceContext* ptrContext, DS5W::DS5OutputState* ptrOutputState);
+
+	DS5W_ReturnValue getCalibrationReport(DS5W::DeviceContext * ptrContext);
 }
