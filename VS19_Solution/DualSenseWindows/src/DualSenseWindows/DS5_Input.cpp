@@ -58,40 +58,29 @@ void __DS5W::Input::evaluateHidInputBuffer(unsigned char* hidInBuffer, DS5W::DS5
 		ptrInputState->buttonsAndDpad |= DS5W_ISTATE_DPAD_RIGHT | DS5W_ISTATE_DPAD_DOWN;
 		break;
 	}
-	
-	short raw_accelerometer[3];
-	short raw_gyroscope[3];
-	
-	memcpy(&raw_gyroscope, &hidInBuffer[0x0F], 2 * 3);
-	memcpy(&raw_accelerometer, &hidInBuffer[0x15], 2 * 3);
 
-	/*ptrInputState->accelerometer.x = raw_accelerometer[0];
-	ptrInputState->accelerometer.y = raw_accelerometer[1];
-	ptrInputState->accelerometer.z = raw_accelerometer[2];
-	ptrInputState->gyroscope.x = raw_gyroscope[0];
-	ptrInputState->gyroscope.y = raw_gyroscope[1];
-	ptrInputState->gyroscope.z = raw_gyroscope[2];*/
+	// pointer to raw data in Hid report
+	const short* raw_accelerometer = (short*)&hidInBuffer[0x15];
+	const short* raw_gyroscope = (short*)&hidInBuffer[0x0F];
 
+	// parse + calibrate accelerometer
 	ptrInputState->accelerometer.x = mult_frac(ptrContext->_internal.accel_calib_data[0].sens_numer,
 		raw_accelerometer[0] - ptrContext->_internal.accel_calib_data[0].bias,
 		ptrContext->_internal.accel_calib_data[0].sens_denom);
-
 	ptrInputState->accelerometer.y = mult_frac(ptrContext->_internal.accel_calib_data[1].sens_numer,
 		raw_accelerometer[1] - ptrContext->_internal.accel_calib_data[1].bias,
 		ptrContext->_internal.accel_calib_data[1].sens_denom);
-
 	ptrInputState->accelerometer.z = mult_frac(ptrContext->_internal.accel_calib_data[2].sens_numer,
 		raw_accelerometer[2] - ptrContext->_internal.accel_calib_data[2].bias,
 		ptrContext->_internal.accel_calib_data[2].sens_denom);
 
+	// parse + calibrate gyroscope
 	ptrInputState->gyroscope.x = mult_frac(ptrContext->_internal.gyro_calib_data[0].sens_numer,
 		raw_gyroscope[0] - ptrContext->_internal.gyro_calib_data[0].bias,
 		ptrContext->_internal.gyro_calib_data[0].sens_denom);
-
 	ptrInputState->gyroscope.y = mult_frac(ptrContext->_internal.gyro_calib_data[1].sens_numer,
 		raw_gyroscope[1] - ptrContext->_internal.gyro_calib_data[1].bias,
 		ptrContext->_internal.gyro_calib_data[1].sens_denom);
-
 	ptrInputState->gyroscope.z = mult_frac(ptrContext->_internal.gyro_calib_data[2].sens_numer,
 		raw_gyroscope[2] - ptrContext->_internal.gyro_calib_data[2].bias,
 		ptrContext->_internal.gyro_calib_data[2].sens_denom);
@@ -125,23 +114,23 @@ void __DS5W::Input::evaluateHidInputBuffer(unsigned char* hidInBuffer, DS5W::DS5
 
 void __DS5W::Input::parseCalibrationData(DS5W::DeviceContext* device, short* data)
 {
-	short gyro_pitch_bias = data[0];
-	short gyro_yaw_bias = data[1];
-	short gyro_roll_bias = data[2];
-	short gyro_pitch_plus = data[3];
-	short gyro_pitch_minus = data[4];
-	short gyro_yaw_plus = data[5];
-	short gyro_yaw_minus = data[6];
-	short gyro_roll_plus = data[7];
-	short gyro_roll_minus = data[8];
-	short gyro_speed_plus = data[9];
-	short gyro_speed_minus = data[10];
-	short acc_x_plus = data[11];
-	short acc_x_minus = data[12];
-	short acc_y_plus = data[13];
-	short acc_y_minus = data[14];
-	short acc_z_plus = data[15];
-	short acc_z_minus = data[16];
+	const short gyro_pitch_bias = data[0];
+	const short gyro_yaw_bias = data[1];
+	const short gyro_roll_bias = data[2];
+	const short gyro_pitch_plus = data[3];
+	const short gyro_pitch_minus = data[4];
+	const short gyro_yaw_plus = data[5];
+	const short gyro_yaw_minus = data[6];
+	const short gyro_roll_plus = data[7];
+	const short gyro_roll_minus = data[8];
+	const short gyro_speed_plus = data[9];
+	const short gyro_speed_minus = data[10];
+	const short acc_x_plus = data[11];
+	const short acc_x_minus = data[12];
+	const short acc_y_plus = data[13];
+	const short acc_y_minus = data[14];
+	const short acc_z_plus = data[15];
+	const short acc_z_minus = data[16];
 
 	int speed_2x;
 	int range_2g;
