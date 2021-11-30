@@ -40,7 +40,7 @@ namespace DS5W {
 	/// <param name="pointerToArray">(Optional) true: DeviceEnumInfo pointer is the pointer to an array of DeviceEnumInfo objects. false: DeviceEnumInfo pointer is a pointer to DeviceEnumInfo pointers to DeviceEnumInfo objects</param>
 	/// <param name="requiredLength">(Optional) pointer to uint witch recives the required total length</param>
 	/// <returns>DS5W Return value</returns>
-	DS5W_API DS5W_ReturnValue enumDevices(void* ptrBuffer, unsigned int inArrLength, unsigned int* ptrLength, bool pointerToArray = true);
+	extern "C" DS5W_API DS5W_ReturnValue enumDevices(void* ptrBuffer, unsigned int inArrLength, unsigned int* ptrLength, bool pointerToArray = true);
 
 	/// <summary>
 	/// Initializes a DeviceContext from its enum infos
@@ -48,20 +48,20 @@ namespace DS5W {
 	/// <param name="ptrEnumInfo">Pointer to enum object to create device from</param>
 	/// <param name="ptrContext">Pointer to context to create to</param>
 	/// <returns>If creation was successfull</returns>
-	DS5W_API DS5W_ReturnValue initDeviceContext(DS5W::DeviceEnumInfo* ptrEnumInfo, DS5W::DeviceContext* ptrContext);
+	extern "C" DS5W_API DS5W_ReturnValue initDeviceContext(DS5W::DeviceEnumInfo* ptrEnumInfo, DS5W::DeviceContext* ptrContext);
 
 	/// <summary>
 	/// Free the device conntext
 	/// </summary>
 	/// <param name="ptrContext">Pointer to context</param>
-	DS5W_API void freeDeviceContext(DS5W::DeviceContext* ptrContext);
+	extern "C" DS5W_API void freeDeviceContext(DS5W::DeviceContext* ptrContext);
 
 	/// <summary>
 	/// Try to reconnect a removed device
 	/// </summary>
 	/// <param name="ptrContext">Context to reconnect on</param>
 	/// <returns>Result</returns>
-	DS5W_API DS5W_ReturnValue reconnectDevice(DS5W::DeviceContext* ptrContext);
+	extern "C" DS5W_API DS5W_ReturnValue reconnectDevice(DS5W::DeviceContext* ptrContext);
 
 	/// <summary>
 	/// Get device input state
@@ -69,7 +69,7 @@ namespace DS5W {
 	/// <param name="ptrContext">Pointer to context</param>
 	/// <param name="ptrInputState">Pointer to input state</param>
 	/// <returns>Result of call</returns>
-	DS5W_API DS5W_ReturnValue getDeviceInputState(DS5W::DeviceContext* ptrContext, DS5W::DS5InputState* ptrInputState);
+	extern "C" DS5W_API DS5W_ReturnValue getDeviceInputState(DS5W::DeviceContext* ptrContext, DS5W::DS5InputState* ptrInputState);
 
 	/// <summary>
 	/// Set the device output state
@@ -77,5 +77,5 @@ namespace DS5W {
 	/// <param name="ptrContext">Pointer to context</param>
 	/// <param name="ptrOutputState">Pointer to output state to be set</param>
 	/// <returns>Result of call</returns>
-	DS5W_API DS5W_ReturnValue setDeviceOutputState(DS5W::DeviceContext* ptrContext, DS5W::DS5OutputState* ptrOutputState);
+	extern "C" DS5W_API DS5W_ReturnValue setDeviceOutputState(DS5W::DeviceContext* ptrContext, DS5W::DS5OutputState* ptrOutputState);
 }

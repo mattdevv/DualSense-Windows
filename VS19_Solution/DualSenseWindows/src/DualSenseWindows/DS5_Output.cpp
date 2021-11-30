@@ -32,8 +32,11 @@ void __DS5W::Output::createHidOutputBuffer(unsigned char* hidOutBuffer, DS5W::DS
 	hidOutBuffer[0x2E] = ptrOutputState->lightbar.b;
 
 	// Adaptive Triggers
-	processTrigger(&ptrOutputState->leftTriggerEffect, &hidOutBuffer[0x15]);
-	processTrigger(&ptrOutputState->rightTriggerEffect, &hidOutBuffer[0x0A]);
+	memcpy(&hidOutBuffer[0x15], &ptrOutputState->leftTriggerEffect, 11);
+	memcpy(&hidOutBuffer[0x0A], &ptrOutputState->rightTriggerEffect, 11);
+
+	//processTrigger(&ptrOutputState->leftTriggerEffect, &hidOutBuffer[0x15]);
+	//processTrigger(&ptrOutputState->rightTriggerEffect, &hidOutBuffer[0x0A]);
 }
 
 void __DS5W::Output::processTrigger(DS5W::TriggerEffect* ptrEffect, unsigned char* buffer) {

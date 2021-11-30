@@ -180,7 +180,7 @@ namespace DS5W {
 			/// <summary>
 			/// Union one raw data
 			/// </summary>
-			unsigned char _u1_raw[6];
+			unsigned char _u1_raw[10];
 
 			/// <summary>
 			/// For type == ContinuousResitance
@@ -199,7 +199,7 @@ namespace DS5W {
 				/// <summary>
 				/// PAD / UNUSED
 				/// </summary>
-				unsigned char _pad[4];
+				unsigned char _pad[8];
 			} Continuous;
 
 			/// <summary>
@@ -219,7 +219,7 @@ namespace DS5W {
 				/// <summary>
 				/// PAD / UNUSED
 				/// </summary>
-				unsigned char _pad[4];
+				unsigned char _pad[8];
 			} Section;
 
 			/// <summary>
@@ -255,6 +255,11 @@ namespace DS5W {
 				/// Vibration frequency of the trigger
 				/// </summary>
 				unsigned char frequency;
+
+				/// <summary>
+				/// PAD / UNUSED
+				/// </summary>
+				unsigned char _pad[4];
 			} EffectEx;
 		};
 	} TriggerEffect;
