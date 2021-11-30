@@ -62,8 +62,15 @@ void __DS5W::Input::evaluateHidInputBuffer(unsigned char* hidInBuffer, DS5W::DS5
 	short raw_accelerometer[3];
 	short raw_gyroscope[3];
 	
-	memcpy(&raw_accelerometer, &hidInBuffer[0x0F], 2 * 3);
-	memcpy(&raw_gyroscope, &hidInBuffer[0x15], 2 * 3);
+	memcpy(&raw_gyroscope, &hidInBuffer[0x0F], 2 * 3);
+	memcpy(&raw_accelerometer, &hidInBuffer[0x15], 2 * 3);
+
+	/*ptrInputState->accelerometer.x = raw_accelerometer[0];
+	ptrInputState->accelerometer.y = raw_accelerometer[1];
+	ptrInputState->accelerometer.z = raw_accelerometer[2];
+	ptrInputState->gyroscope.x = raw_gyroscope[0];
+	ptrInputState->gyroscope.y = raw_gyroscope[1];
+	ptrInputState->gyroscope.z = raw_gyroscope[2];*/
 
 	ptrInputState->accelerometer.x = mult_frac(ptrContext->_internal.accel_calib_data[0].sens_numer,
 		raw_accelerometer[0] - ptrContext->_internal.accel_calib_data[0].bias,
