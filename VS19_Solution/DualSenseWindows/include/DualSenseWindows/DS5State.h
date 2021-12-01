@@ -397,6 +397,11 @@ namespace DS5W {
 		unsigned char rightRumble;
 
 		/// <summary>
+		/// Concat strength of motors in 12.5% steps
+		/// </summary>
+		unsigned char rumbleStrength;
+
+		/// <summary>
 		/// State of the microphone led
 		/// </summary>
 		MicLed microphoneLed;

@@ -2,17 +2,45 @@
 
 void __DS5W::Output::createHidOutputBuffer(unsigned char* hidOutBuffer, DS5W::DS5OutputState* ptrOutputState) {
 	// Feature mask
-	hidOutBuffer[0x00] = 0xFF;
-	hidOutBuffer[0x01] = 0xF7;
 
-	// Rumbel motors
+	// 0x01 Set the main motors (also requires flag 0x02)
+	// 0x02 Set the main motors (also requires flag 0x01)
+	// 0x04 Set the right trigger motor
+	// 0x08 Set the left trigger motor
+	// 0x10 Enable modification of audio volume
+	// 0x20 Enable internal speaker (even while headset is connected)
+	// 0x40 Enable modification of microphone volume
+	// 0x80 Enable internal mic (even while headset is connected)
+	const unsigned char FEATURES1 = 0b00001111;
+
+	// 0x01 Toggling microphone LED
+	// 0x02 Toggling Audio/Mic Mute
+	// 0x04 Toggling LED strips on the sides of the Touchpad
+	// 0x08 Turn off all LED lights
+	// 0x10 Toggle player LED lights below Touchpad
+	// 0x20 ???
+	// 0x40 Adjust overall motor/effect power
+	// 0x80 ???
+	const unsigned char FEATURES2 = 0b11110111;
+
+	hidOutBuffer[0x00] = FEATURES1;
+	hidOutBuffer[0x01] = FEATURES2;
+
+	// Rumble motors
 	hidOutBuffer[0x02] = ptrOutputState->rightRumble;
 	hidOutBuffer[0x03] = ptrOutputState->leftRumble;
 
 	// Mic led
 	hidOutBuffer[0x08] = (unsigned char)ptrOutputState->microphoneLed;
 
-	// Player led
+	hidOutBuffer[0x24] = ptrOutputState->rumbleStrength;
+
+	// Player led brightness
+	hidOutBuffer[0x26] = 0x03;
+	hidOutBuffer[0x29] = ptrOutputState->disableLeds ? 0x01 : 0x2;
+	hidOutBuffer[0x2A] = ptrOutputState->playerLeds.brightness;
+
+	// Player led mask
 	hidOutBuffer[0x2B] = ptrOutputState->playerLeds.bitmask;
 	if (ptrOutputState->playerLeds.playerLedFade) {
 		hidOutBuffer[0x2B] &= ~(0x20);
@@ -21,19 +49,15 @@ void __DS5W::Output::createHidOutputBuffer(unsigned char* hidOutBuffer, DS5W::DS
 		hidOutBuffer[0x2B] |= 0x20;
 	}
 
-	// Player led brightness
-	hidOutBuffer[0x26] = 0x03;
-	hidOutBuffer[0x29] = ptrOutputState->disableLeds ? 0x01 : 0x2;
-	hidOutBuffer[0x2A] = ptrOutputState->playerLeds.brightness;
-
 	// Lightbar
 	hidOutBuffer[0x2C] = ptrOutputState->lightbar.r;
 	hidOutBuffer[0x2D] = ptrOutputState->lightbar.g;
 	hidOutBuffer[0x2E] = ptrOutputState->lightbar.b;
 
 	// Adaptive Triggers
-	memcpy(&hidOutBuffer[0x15], &ptrOutputState->leftTriggerEffect, 11);
 	memcpy(&hidOutBuffer[0x0A], &ptrOutputState->rightTriggerEffect, 11);
+	memcpy(&hidOutBuffer[0x15], &ptrOutputState->leftTriggerEffect, 11);
+	
 
 	//processTrigger(&ptrOutputState->leftTriggerEffect, &hidOutBuffer[0x15]);
 	//processTrigger(&ptrOutputState->rightTriggerEffect, &hidOutBuffer[0x0A]);
