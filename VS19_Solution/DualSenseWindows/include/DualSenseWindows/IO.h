@@ -30,6 +30,7 @@
 #include <DualSenseWindows/DSW_Api.h>
 #include <DualSenseWindows/Device.h>
 #include <DualSenseWindows/DS5State.h>
+#include <DualSenseWindows/DeviceSpecs.h>
 
 namespace DS5W {
 	/// <summary>

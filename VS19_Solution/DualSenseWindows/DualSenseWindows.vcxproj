@@ -326,7 +326,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\DualSenseWindows\Device.h" />
-    <ClInclude Include="include\DualSenseWindows\DS5Reports.h" />
+    <ClInclude Include="include\DualSenseWindows\DeviceSpecs.h" />
     <ClInclude Include="include\DualSenseWindows\DS5State.h" />
     <ClInclude Include="include\DualSenseWindows\DSW_Api.h" />
     <ClInclude Include="include\DualSenseWindows\Helpers.h" />

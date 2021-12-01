@@ -10,9 +10,15 @@
 */
 #pragma once
 
-#include <DualSenseWindows/DS5Reports.h>
+#include <DualSenseWindows/DeviceSpecs.h>
 
 namespace DS5W {
+	typedef struct _CalibrationData {
+		short bias;
+		int sens_numer;
+		int sens_denom;
+	} CalibrationData;
+
 	/// <summary>
 	/// Enum for device connection type
 	/// </summary>

@@ -89,7 +89,7 @@ DS5W_API DS5W_ReturnValue DS5W::enumDevices(void* ptrBuffer, unsigned int inArrL
 				}
 
 				// Check if ids match
-				if (vendorId == 0x054C && productId == 0x0CE6) {
+				if (vendorId == SONY_CORP_VENDOR_ID && productId == DUALSENSE_CONTROLLER_PROD_ID) {
 					// Get pointer to target
 					DS5W::DeviceEnumInfo* ptrInfo = nullptr;
 					if (inputArrIndex < inArrLength) {
@@ -115,17 +115,17 @@ DS5W_API DS5W_ReturnValue DS5W::enumDevices(void* ptrBuffer, unsigned int inArrL
 							// Check for device connection type
 							if (ptrInfo) {
 								// Check if controller matches USB specifications
-								if (deviceCaps.InputReportByteLength == 64) {
+								if (deviceCaps.InputReportByteLength == DS_INPUT_REPORT_USB_SIZE) {
 									ptrInfo->_internal.connection = DS5W::DeviceConnection::USB;
 
-									// Device found and valid -> Inrement index
+									// Device found and valid -> Increment index
 									inputArrIndex++;
 								}
 								// Check if controler matches BT specifications
-								else if(deviceCaps.InputReportByteLength == 78) {
+								else if(deviceCaps.InputReportByteLength == DS_INPUT_REPORT_BT_SIZE) {
 									ptrInfo->_internal.connection = DS5W::DeviceConnection::BT;
 
-									// Device found and valid -> Inrement index
+									// Device found and valid -> Increment index
 									inputArrIndex++;
 								}
 							}
@@ -192,24 +192,7 @@ DS5W_API DS5W_ReturnValue DS5W::initDeviceContext(DS5W::DeviceEnumInfo* ptrEnumI
 	ptrContext->_internal.deviceHandle = deviceHandle;
 	wcscpy_s(ptrContext->_internal.devicePath, 260, ptrEnumInfo->_internal.path);
 
-	// Get input report length
-	unsigned short reportLength = 0;
-	if (ptrContext->_internal.connection == DS5W::DeviceConnection::BT) {
-		// Start BT by reading feature report 5
-		unsigned char fBuffer[64];
-		fBuffer[0] = 0x05;
-		if (!HidD_GetFeature(deviceHandle, fBuffer, 64)) {
-			return DS5W_E_BT_COM;
-		}
-		
-		// The bluetooth input report is 78 Bytes long
-		reportLength = 78;
-	}
-	else {
-		// The usb input report is 64 Bytes long
-		reportLength = 64;
-	}
-
+	// get calibration data
 	getCalibrationReport(ptrContext);
 
 	// Return OK
@@ -278,13 +261,13 @@ DS5W_API DS5W_ReturnValue DS5W::getDeviceInputState(DS5W::DeviceContext* ptrCont
 	unsigned short inputReportLength = 0;
 	if (ptrContext->_internal.connection == DS5W::DeviceConnection::BT) {
 		// The bluetooth input report is 78 Bytes long
-		inputReportLength = 78;
-		ptrContext->_internal.hidBuffer[0] = 0x31;
+		inputReportLength = DS_INPUT_REPORT_BT_SIZE;
+		ptrContext->_internal.hidBuffer[0] = DS_OUTPUT_REPORT_BT;
 	}
 	else {
 		// The usb input report is 64 Bytes long
-		inputReportLength = 64;
-		ptrContext->_internal.hidBuffer[0] = 0x01;
+		inputReportLength = DS_INPUT_REPORT_USB_SIZE;
+		ptrContext->_internal.hidBuffer[0] = DS_INPUT_REPORT_USB;
 	}
 
 	// Get device input
@@ -326,11 +309,11 @@ DS5W_API DS5W_ReturnValue DS5W::setDeviceOutputState(DS5W::DeviceContext* ptrCon
 	unsigned short outputReportLength = 0;
 	if (ptrContext->_internal.connection == DS5W::DeviceConnection::BT) {
 		// The bluetooth output report is 78 Bytes long
-		outputReportLength = 78;
+		outputReportLength = DS_OUTPUT_REPORT_BT_SIZE;
 	}
 	else {
 		// The usb output report is 63 Bytes long
-		outputReportLength = 63;
+		outputReportLength = DS_OUTPUT_REPORT_USB_SIZE;
 	}
 
 	// Cleat all input data
@@ -340,12 +323,12 @@ DS5W_API DS5W_ReturnValue DS5W::setDeviceOutputState(DS5W::DeviceContext* ptrCon
 	if (ptrContext->_internal.connection == DS5W::DeviceConnection::BT) {
 		//return DS5W_E_CURRENTLY_NOT_SUPPORTED;
 		// Report type
-		ptrContext->_internal.hidBuffer[0x00] = 0x31;
-		ptrContext->_internal.hidBuffer[0x01] = 0x02;
+		ptrContext->_internal.hidBuffer[0x00] = DS_OUTPUT_REPORT_BT;
+		ptrContext->_internal.hidBuffer[0x01] = 0x02;	// magic value?
 		__DS5W::Output::createHidOutputBuffer(&ptrContext->_internal.hidBuffer[2], ptrOutputState);
 
 		// Hash
-		const UINT32 crcChecksum = __DS5W::CRC32::compute(ptrContext->_internal.hidBuffer, 74);
+		const UINT32 crcChecksum = __DS5W::CRC32::compute(ptrContext->_internal.hidBuffer, DS_OUTPUT_REPORT_BT_SIZE - 4);
 
 		ptrContext->_internal.hidBuffer[0x4A] = (unsigned char)((crcChecksum & 0x000000FF) >> 0UL);
 		ptrContext->_internal.hidBuffer[0x4B] = (unsigned char)((crcChecksum & 0x0000FF00) >> 8UL);
@@ -355,7 +338,7 @@ DS5W_API DS5W_ReturnValue DS5W::setDeviceOutputState(DS5W::DeviceContext* ptrCon
 	}
 	else {
 		// Report type
-		ptrContext->_internal.hidBuffer[0x00] = 0x02;
+		ptrContext->_internal.hidBuffer[0x00] = DS_OUTPUT_REPORT_USB;
 
 		// Else it is USB so call its evaluator
 		__DS5W::Output::createHidOutputBuffer(&ptrContext->_internal.hidBuffer[1], ptrOutputState);
