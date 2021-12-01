@@ -107,9 +107,21 @@ void __DS5W::Input::evaluateHidInputBuffer(unsigned char* hidInBuffer, DS5W::DS5
 	ptrInputState->rightTriggerFeedback = hidInBuffer[0x29];
 
 	// Battery
-	ptrInputState->battery.chargin = (hidInBuffer[0x35] & 0x08);
-	ptrInputState->battery.fullyCharged = (hidInBuffer[0x36] & 0x20);
-	ptrInputState->battery.level = (hidInBuffer[0x36] & 0x0F);
+	unsigned char batteryData = hidInBuffer[0x34];
+	bool batteryFull = (batteryData & 0x20) != 0;
+	unsigned char batteryLevel = 100;
+
+	if (!batteryFull)
+	{
+		// calculate partial charge
+		batteryLevel = (batteryData & 0x0F) * 100 / 8;
+		// clamp to 0-100
+		batteryLevel = (100 < batteryLevel) ? 100 : batteryLevel;
+	}
+
+	ptrInputState->battery.chargin = (hidInBuffer[0x35] & 0x08) != 0;
+	ptrInputState->battery.fullyCharged = batteryFull;
+	ptrInputState->battery.level = batteryLevel;
 }
 
 void __DS5W::Input::parseCalibrationData(DS5W::DeviceContext* device, short* data)
@@ -171,50 +183,3 @@ void __DS5W::Input::parseCalibrationData(DS5W::DeviceContext* device, short* dat
 	device->_internal.accel_calib_data[2].sens_numer = 2 * DS_ACC_RES_PER_G;
 	device->_internal.accel_calib_data[2].sens_denom = range_2g;
 }
-
-// for debugging with known values
-//void __DS5W::Input::evaluateHidInputBuffer(unsigned char* hidInBuffer, DS5W::DS5InputState* ptrInputState) {
-//	// Convert sticks to signed range
-//	ptrInputState->leftStick.x = 1;
-//	ptrInputState->leftStick.y = 2;
-//	ptrInputState->rightStick.x = 3;
-//	ptrInputState->rightStick.y = 4;
-//
-//	// Convert trigger to unsigned range
-//	ptrInputState->leftTrigger = 5;
-//	ptrInputState->rightTrigger = 6;
-//
-//	// Buttons
-//	ptrInputState->buttonsAndDpad = 7;
-//	ptrInputState->buttonsA = 8;
-//	ptrInputState->buttonsB = 9;
-//
-//	ptrInputState->accelerometer.x = 10;
-//	ptrInputState->accelerometer.y = 11;
-//	ptrInputState->accelerometer.z = 12;
-//	ptrInputState->gyroscope.x = 13;
-//	ptrInputState->gyroscope.y = 14;
-//	ptrInputState->gyroscope.z = 15;
-//
-//	ptrInputState->touchPoint1.y = 17;
-//	ptrInputState->touchPoint1.x = 16;
-//	ptrInputState->touchPoint1.down = false;
-//	ptrInputState->touchPoint1.id = 18;
-//
-//	ptrInputState->touchPoint2.y = 20;
-//	ptrInputState->touchPoint2.x = 19;
-//	ptrInputState->touchPoint2.down = true;
-//	ptrInputState->touchPoint2.id = 21;
-//
-//	// Battery
-//	ptrInputState->battery.chargin = true;
-//	ptrInputState->battery.fullyCharged = false;
-//	ptrInputState->battery.level = 22;
-//
-//	// Evaluate headphone input
-//	ptrInputState->headPhoneConnected = false;
-//
-//	// Trigger force feedback
-//	ptrInputState->leftTriggerFeedback = 23;
-//	ptrInputState->rightTriggerFeedback = 24 ;
-//}
