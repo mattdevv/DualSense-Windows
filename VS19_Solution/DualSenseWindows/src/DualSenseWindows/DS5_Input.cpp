@@ -106,6 +106,8 @@ void __DS5W::Input::evaluateHidInputBuffer(unsigned char* hidInBuffer, DS5W::DS5
 	ptrInputState->leftTriggerFeedback = hidInBuffer[0x2A];
 	ptrInputState->rightTriggerFeedback = hidInBuffer[0x29];
 
+	ptrInputState->timestamp = *(unsigned int*)&hidInBuffer[0x1B];
+
 	// Battery
 	unsigned char batteryData = hidInBuffer[0x34];
 	bool batteryFull = (batteryData & 0x20) != 0;
@@ -114,9 +116,7 @@ void __DS5W::Input::evaluateHidInputBuffer(unsigned char* hidInBuffer, DS5W::DS5
 	if (!batteryFull)
 	{
 		// calculate partial charge
-		batteryLevel = (batteryData & 0x0F) * 100 / 8;
-		// clamp to 0-100
-		batteryLevel = (100 < batteryLevel) ? 100 : batteryLevel;
+		batteryLevel = min((batteryData & 0x0F) * 10 + 5, 100);
 	}
 
 	ptrInputState->battery.chargin = (hidInBuffer[0x35] & 0x08) != 0;

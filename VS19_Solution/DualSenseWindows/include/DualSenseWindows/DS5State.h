@@ -365,6 +365,11 @@ namespace DS5W {
 		Touch touchPoint2;
 
 		/// <summary>
+		/// Sensor timestamp in 0.33 microseconds
+		/// </summary>
+		unsigned int timestamp;
+
+		/// <summary>
 		/// Battery information
 		/// </summary>
 		Battery battery;
@@ -397,7 +402,9 @@ namespace DS5W {
 		unsigned char rightRumble;
 
 		/// <summary>
-		/// Concat strength of motors in 12.5% steps
+		/// strength of rumble motors in 12.5% steps
+		/// lower nibble (bits 0-3) main rumbles
+		/// uppper nibble (bits 4-7) trigger rumbles
 		/// </summary>
 		unsigned char rumbleStrength;
 
