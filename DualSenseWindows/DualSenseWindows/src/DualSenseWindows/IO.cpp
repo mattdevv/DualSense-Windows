@@ -4,7 +4,7 @@
 
 	Contributors of this file:
 	11.2020 Ludwig Füchsl
-	11.2021 mattdevv
+	11.2021 Matthew Hall
 
 	Licensed under the MIT License (To be found in repository root directory)
 */

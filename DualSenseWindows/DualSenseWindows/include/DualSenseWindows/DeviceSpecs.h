@@ -1,9 +1,9 @@
 /*
-	DS5State.h is part of DualSenseWindows
+	DS5Specs.h is part of DualSenseWindows
 	https://github.com/Ohjurot/DualSense-Windows
 
 	Contributors of this file:
-	11.2021 mattdevv
+	11.2021 Matthew Hall
 
 	Licensed under the MIT License (To be found in repository root directory)
 */
