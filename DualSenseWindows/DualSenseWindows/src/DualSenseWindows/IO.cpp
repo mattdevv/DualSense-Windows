@@ -284,10 +284,10 @@ DS5W_API DS5W_ReturnValue DS5W::getDeviceInputState(DS5W::DeviceContext* ptrCont
 	// Evaluete input buffer
 	if (ptrContext->_internal.connection == DS5W::DeviceConnection::BT) {
 		// Call bluetooth evaluator if connection is qual to BT
-		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidBuffer[2], ptrInputState, ptrContext);
+		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidBuffer[2], ptrInputState, &ptrContext->_internal.calibrationData);
 	} else {
 		// Else it is USB so call its evaluator
-		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidBuffer[1], ptrInputState, ptrContext);
+		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidBuffer[1], ptrInputState, &ptrContext->_internal.calibrationData);
 	}
 	
 	// Return ok
@@ -390,7 +390,7 @@ DS5W_ReturnValue DS5W::getCalibrationReport(DS5W::DeviceContext* ptrContext)
 	}
 
 	// use calibration data to calculate constant values
-	__DS5W::Input::parseCalibrationData(ptrContext, (short*)(&data[1]));
+	__DS5W::Input::parseCalibrationData(&ptrContext->_internal.calibrationData, (short*)(&data[1]));
 	
 	delete[] data;
 

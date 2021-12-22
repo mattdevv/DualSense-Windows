@@ -12,12 +12,40 @@
 
 #include <DualSenseWindows/DeviceSpecs.h>
 
+// more accurate integer multiplication by a fraction
+constexpr int mult_frac(int x, int numer, int denom)
+{
+	int quot = x / denom;
+	int rem = x % denom;
+	return quot * numer + (rem * numer) / denom;
+}
+
 namespace DS5W {
-	typedef struct _CalibrationData {
+	/// <summary>
+	/// Storage for calibration values used to parse raw motion data
+	/// </summary>
+	typedef struct _AxisCalibrationData {
 		short bias;
 		int sens_numer;
 		int sens_denom;
-	} CalibrationData;
+
+		int calibrate(int rawValue)
+		{
+			return mult_frac(sens_numer, rawValue - bias, sens_denom);
+		}
+	} AxisCalibrationData;
+
+	typedef struct _DeviceCalibrationData {
+		/// <summary>
+			/// Values to calibrate controller's accelerometer and gyroscope
+			/// </summary>
+		AxisCalibrationData accel_calib_data[3];
+
+		/// <summary>
+		/// Values to calibrate controller's gyroscope
+		/// </summary>
+		AxisCalibrationData gyro_calib_data[3];
+	} DeviceCalibrationData;
 
 	/// <summary>
 	/// Enum for device connection type
@@ -77,8 +105,10 @@ namespace DS5W {
 			/// </summary>
 			DeviceConnection connection;
 
-			CalibrationData accel_calib_data[3];
-			CalibrationData gyro_calib_data[3];
+			/// <summary>
+			/// Collection of values required to parse controller's motion data
+			/// </summary>
+			DeviceCalibrationData calibrationData;
 
 			/// <summary>
 			/// Current state of connection
@@ -88,7 +118,7 @@ namespace DS5W {
 			/// <summary>
 			/// HID Input buffer (will be allocated by the context init function)
 			/// </summary>
-			unsigned char hidBuffer[547];
+			unsigned char hidBuffer[78];
 		}_internal;
 	} DeviceContext;
 }
