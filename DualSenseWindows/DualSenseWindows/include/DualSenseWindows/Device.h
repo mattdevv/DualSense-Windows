@@ -39,12 +39,12 @@ namespace DS5W {
 		/// <summary>
 			/// Values to calibrate controller's accelerometer and gyroscope
 			/// </summary>
-		AxisCalibrationData accel_calib_data[3];
+		AxisCalibrationData accelerometer[3];
 
 		/// <summary>
 		/// Values to calibrate controller's gyroscope
 		/// </summary>
-		AxisCalibrationData gyro_calib_data[3];
+		AxisCalibrationData gyroscope[3];
 	} DeviceCalibrationData;
 
 	/// <summary>
@@ -109,6 +109,11 @@ namespace DS5W {
 			/// Collection of values required to parse controller's motion data
 			/// </summary>
 			DeviceCalibrationData calibrationData;
+
+			/// <summary>
+			/// Time when last input report was received, measured in 0.33 microseconds
+			/// </summary>
+			unsigned int lastTimestamp;
 
 			/// <summary>
 			/// Current state of connection

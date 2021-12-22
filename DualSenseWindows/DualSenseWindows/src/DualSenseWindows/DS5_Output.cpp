@@ -58,7 +58,6 @@ void __DS5W::Output::createHidOutputBuffer(unsigned char* hidOutBuffer, DS5W::DS
 	memcpy(&hidOutBuffer[0x0A], &ptrOutputState->rightTriggerEffect, 11);
 	memcpy(&hidOutBuffer[0x15], &ptrOutputState->leftTriggerEffect, 11);
 	
-
 	//processTrigger(&ptrOutputState->leftTriggerEffect, &hidOutBuffer[0x15]);
 	//processTrigger(&ptrOutputState->rightTriggerEffect, &hidOutBuffer[0x0A]);
 }

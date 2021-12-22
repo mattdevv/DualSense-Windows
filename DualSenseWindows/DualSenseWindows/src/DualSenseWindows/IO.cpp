@@ -193,7 +193,30 @@ DS5W_API DS5W_ReturnValue DS5W::initDeviceContext(DS5W::DeviceEnumInfo* ptrEnumI
 	wcscpy_s(ptrContext->_internal.devicePath, 260, ptrEnumInfo->_internal.path);
 
 	// get calibration data
-	getCalibrationReport(ptrContext);
+	_DS5W_ReturnValue err = getCalibrationReport(ptrContext);
+	if (!DS5W_SUCCESS(err))
+	{
+		// Close handle and set error state
+		CloseHandle(ptrContext->_internal.deviceHandle);
+		ptrContext->_internal.deviceHandle = NULL;
+		ptrContext->_internal.connected = false;
+
+		// Return error
+		return err;
+	}
+
+	// get timestamp so deltatime is valid
+	err = getInitialTimestamp(ptrContext);
+	if (!DS5W_SUCCESS(err))
+	{
+		// Close handle and set error state
+		CloseHandle(ptrContext->_internal.deviceHandle);
+		ptrContext->_internal.deviceHandle = NULL;
+		ptrContext->_internal.connected = false;
+
+		// Return error
+		return err;
+	}
 
 	// Return OK
 	return DS5W_OK;
@@ -284,10 +307,10 @@ DS5W_API DS5W_ReturnValue DS5W::getDeviceInputState(DS5W::DeviceContext* ptrCont
 	// Evaluete input buffer
 	if (ptrContext->_internal.connection == DS5W::DeviceConnection::BT) {
 		// Call bluetooth evaluator if connection is qual to BT
-		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidBuffer[2], ptrInputState, &ptrContext->_internal.calibrationData);
+		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidBuffer[2], ptrInputState, ptrContext);
 	} else {
 		// Else it is USB so call its evaluator
-		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidBuffer[1], ptrInputState, &ptrContext->_internal.calibrationData);
+		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidBuffer[1], ptrInputState, ptrContext);
 	}
 	
 	// Return ok
@@ -371,28 +394,74 @@ DS5W_ReturnValue DS5W::getCalibrationReport(DS5W::DeviceContext* ptrContext)
 		return DS5W_E_DEVICE_REMOVED;
 	}
 
-	// temp storage for report
-	unsigned char* data = new unsigned char[DS_FEATURE_REPORT_CALIBRATION_SIZE];
-
 	// set which report to read
-	data[0] = DS_FEATURE_REPORT_CALIBRATION;
+	ptrContext->_internal.hidBuffer[0] = DS_FEATURE_REPORT_CALIBRATION;
 
-	if (!HidD_GetFeature(ptrContext->_internal.deviceHandle, data, DS_FEATURE_REPORT_CALIBRATION_SIZE)) {
+	if (!HidD_GetFeature(ptrContext->_internal.deviceHandle, ptrContext->_internal.hidBuffer, DS_FEATURE_REPORT_CALIBRATION_SIZE)) {
 		// Close handle and set error state
 		CloseHandle(ptrContext->_internal.deviceHandle);
 		ptrContext->_internal.deviceHandle = NULL;
 		ptrContext->_internal.connected = false;
-
-		delete[] data;
 
 		// Return error
 		return DS5W_E_DEVICE_REMOVED;
 	}
 
 	// use calibration data to calculate constant values
-	__DS5W::Input::parseCalibrationData(&ptrContext->_internal.calibrationData, (short*)(&data[1]));
-	
-	delete[] data;
+	__DS5W::Input::parseCalibrationData(&ptrContext->_internal.calibrationData, (short*)(&ptrContext->_internal.hidBuffer[1]));
 
+	return DS5W_OK;
+}
+
+DS5W_ReturnValue DS5W::getInitialTimestamp(DS5W::DeviceContext* ptrContext)
+{
+	// Check pointer
+	if (!ptrContext) {
+		return DS5W_E_INVALID_ARGS;
+	}
+
+	// Check for connection
+	if (!ptrContext->_internal.connected) {
+		return DS5W_E_DEVICE_REMOVED;
+	}
+
+	// Get the most recent package
+	HidD_FlushQueue(ptrContext->_internal.deviceHandle);
+
+	// Get input report length
+	unsigned short inputReportLength = 0;
+	if (ptrContext->_internal.connection == DS5W::DeviceConnection::BT) {
+		// The bluetooth input report is 78 Bytes long
+		inputReportLength = DS_INPUT_REPORT_BT_SIZE;
+		ptrContext->_internal.hidBuffer[0] = DS_OUTPUT_REPORT_BT;
+	}
+	else {
+		// The usb input report is 64 Bytes long
+		inputReportLength = DS_INPUT_REPORT_USB_SIZE;
+		ptrContext->_internal.hidBuffer[0] = DS_INPUT_REPORT_USB;
+	}
+
+	// Get device input
+	if (!ReadFile(ptrContext->_internal.deviceHandle, ptrContext->_internal.hidBuffer, inputReportLength, NULL, NULL)) {
+		// Close handle and set error state
+		CloseHandle(ptrContext->_internal.deviceHandle);
+		ptrContext->_internal.deviceHandle = NULL;
+		ptrContext->_internal.connected = false;
+
+		// Return error
+		return DS5W_E_DEVICE_REMOVED;
+	}
+
+	// Evaluete input buffer
+	if (ptrContext->_internal.connection == DS5W::DeviceConnection::BT) {
+		// offset by 2 bytes if using bluetooth
+		ptrContext->_internal.lastTimestamp = *(unsigned int*)&ptrContext->_internal.hidBuffer[2 + 0x1B];
+	}
+	else {
+		// offset by 1 bytes if using usb
+		ptrContext->_internal.lastTimestamp = *(unsigned int*)&ptrContext->_internal.hidBuffer[1 + 0x1B];
+	}
+
+	// Return ok
 	return DS5W_OK;
 }

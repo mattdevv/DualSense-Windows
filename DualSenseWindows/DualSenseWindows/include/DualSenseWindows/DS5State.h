@@ -367,7 +367,12 @@ namespace DS5W {
 		/// <summary>
 		/// Sensor timestamp in 0.33 microseconds
 		/// </summary>
-		unsigned int timestamp;
+		unsigned int currentTime;
+
+		/// <summary>
+		/// Time since last input report in 0.33 microseconds
+		/// </summary>
+		unsigned int deltaTime;
 
 		/// <summary>
 		/// Battery information

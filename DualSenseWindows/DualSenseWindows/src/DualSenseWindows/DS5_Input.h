@@ -24,7 +24,7 @@ namespace __DS5W {
 		/// <param name="hidInBuffer">Input buffer</param>
 		/// <param name="ptrInputState">Input state to be set</param>
 		/// <returns></returns>
-		void evaluateHidInputBuffer(unsigned char* hidInBuffer, DS5W::DS5InputState* ptrInputState, DS5W::DeviceCalibrationData* ptrCalibrationData);
+		void evaluateHidInputBuffer(unsigned char* hidInBuffer, DS5W::DS5InputState* ptrInputState, DS5W::DeviceContext* ptrContext);
 
 		/// <summary>
 		/// Extract necessary values from calibration report
