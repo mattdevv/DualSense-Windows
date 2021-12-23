@@ -93,7 +93,7 @@ void __DS5W::Input::evaluateHidInputBuffer(unsigned char* hidInBuffer, DS5W::DS5
 	// absolute difference between current and last timestamp
 	unsigned int deltaTime; 
 	if (previousTime > currentTime)
-		deltaTime = previousTime - currentTime;
+		deltaTime = (0xFFFFFFFF - previousTime) + currentTime;
 	else
 		deltaTime = currentTime - previousTime;
 
