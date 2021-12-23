@@ -56,6 +56,12 @@
 % DS5W_E_BT_COM
 \tblx{DS5W\_E\_BT\_COM}{Bluetooth communication error}
 
+% DS5W_E_IO_TIMEOUT
+\tblx{DS5W\_E\_IO\_TIMEOUT}{Windows IO operation did not complete in time}
+
+% DS5W_E_IO_FAILED
+\tblx{DS5W\_E\_IO\_FAILED}{Windows IO operation failed}
+
 
 
 \paragraph{Error helpers}
@@ -239,6 +245,10 @@ This struct represents the input state of a DualSense controller. It is used to 
 \tbly{\hyperref[APIRef_Types_touch]{Touch}}{touchPoint1}{First touch point.}\\
 
 \tbly{\hyperref[APIRef_Types_touch]{Touch}}{touchPoint2}{Second touch point.}\\
+		
+\tbly{uint32\_t}{currentTime}{Time that the input state was read at (measured in 0.33 microseconds)}\\
+
+\tbly{uint32\_t}{deltaTime}{Time since the previous input state was read (measured in 0.33 microseconds)}\\
 
 \tbly{bool}{headPhoneConnected}{Indicates weather a plug is present in the headphone jack. Will also trigger on an extension cord with no headphone connected!}\\
 
@@ -253,6 +263,8 @@ This struct represents the output state of a DualSense controller. It is used to
 \tbly{uint8\_t}{leftRumble}{Force of the left (hard) rumble motor.}\\
 
 \tbly{uint8\_t}{rightRumble}{Force of the right (soft) rumble motor.}\\
+
+\tbly{uint8\_t}{rumbleStrength}{Strength of the rumble/haptic (trigger) motors. First 4 bits (0-3) represent the rumble motors and last 4 (4-7) represent the trigger's haptics strength.}\\
 
 \tbly{\hyperref[APIRef_Types_micled]{MicLed}}{microphoneLed2}{State of the microphone LED.}\\
 
