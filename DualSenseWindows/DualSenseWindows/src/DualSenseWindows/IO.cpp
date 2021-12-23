@@ -308,7 +308,8 @@ DS5W_API DS5W_ReturnValue DS5W::getDeviceInputState(DS5W::DeviceContext* ptrCont
 	}
 
 	// Get device input
-	DS5W_RV err = getInputReport(ptrContext, inputReportLength, 100);
+	const int timeoutMS = 50;
+	DS5W_RV err = getInputReport(ptrContext, inputReportLength, timeoutMS);
 
 	if (!DS5W_SUCCESS(err)) {
 		// Close handle and set error state
@@ -532,6 +533,7 @@ DS5W_ReturnValue DS5W::setOutputReport(DS5W::DeviceContext* ptrContext, size_t l
 	DWORD bytes_written;
 	BOOL res;
 
+	ResetEvent(ptrContext->_internal.olWrite.hEvent);
 	res = WriteFile(ptrContext->_internal.deviceHandle, ptrContext->_internal.hidBuffer, length, NULL, &ptrContext->_internal.olWrite);
 
 	if (!res) {
