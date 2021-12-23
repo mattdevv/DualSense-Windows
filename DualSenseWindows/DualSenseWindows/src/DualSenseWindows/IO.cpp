@@ -276,6 +276,17 @@ DS5W_API DS5W_ReturnValue DS5W::reconnectDevice(DS5W::DeviceContext* ptrContext)
 	ptrContext->_internal.connected = true;
 	ptrContext->_internal.deviceHandle = deviceHandle;
 
+	// refresh previous timestamp
+	_DS5W_ReturnValue err = getInitialTimestamp(ptrContext);
+	if (!DS5W_SUCCESS(err))
+	{
+		// Close handle and set error state
+		DisconnectController(ptrContext);
+
+		// Return error
+		return err;
+	}
+
 	// Return ok
 	return DS5W_OK;
 }
