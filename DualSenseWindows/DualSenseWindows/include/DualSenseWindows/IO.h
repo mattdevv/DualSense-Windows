@@ -80,6 +80,11 @@ namespace DS5W {
 	/// <returns>Result of call</returns>
 	extern "C" DS5W_API DS5W_ReturnValue setDeviceOutputState(DS5W::DeviceContext* ptrContext, DS5W::DS5OutputState* ptrOutputState);
 
+	void DisconnectController(DS5W::DeviceContext* ptrContext);
+
 	DS5W_ReturnValue getCalibrationReport(DS5W::DeviceContext * ptrContext);
 	DS5W_ReturnValue getInitialTimestamp(DS5W::DeviceContext* ptrContext);
+	DS5W_ReturnValue getInputReport(DS5W::DeviceContext* ptrContext, size_t length, int milliseconds);
+	DS5W_ReturnValue setOutputReport(DS5W::DeviceContext* ptrContext, size_t length);
+	DS5W_ReturnValue getFeatureReport(DS5W::DeviceContext* ptrContext, size_t length);
 }

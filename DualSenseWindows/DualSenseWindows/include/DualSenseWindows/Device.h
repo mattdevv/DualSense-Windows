@@ -10,6 +10,7 @@
 */
 #pragma once
 
+#include <Windows.h>
 #include <DualSenseWindows/DeviceSpecs.h>
 
 // more accurate integer multiplication by a fraction
@@ -98,7 +99,10 @@ namespace DS5W {
 			/// <summary>
 			/// Handle to the open device
 			/// </summary>
-			void* deviceHandle;
+			HANDLE deviceHandle;
+
+			OVERLAPPED olRead;
+			OVERLAPPED olWrite;
 
 			/// <summary>
 			/// Connection of the device

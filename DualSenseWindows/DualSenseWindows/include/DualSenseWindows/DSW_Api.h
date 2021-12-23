@@ -4,6 +4,7 @@
 
 	Contributors of this file:
 	11.2020 Ludwig Füchsl
+	12.2021 Matthew Hall
 
 	Licensed under the MIT License (To be found in repository root directory)
 */
@@ -31,6 +32,8 @@
 #define DS5W_E_CURRENTLY_NOT_SUPPORTED _DS5W_ReturnValue::E_CURRENTLY_NOT_SUPPORTED
 #define DS5W_E_DEVICE_REMOVED _DS5W_ReturnValue::E_DEVICE_REMOVED
 #define DS5W_E_BT_COM _DS5W_ReturnValue::E_BT_COM
+#define DS5W_E_IO_TIMEOUT _DS5W_ReturnValue::E_IO_TIMEOUT
+#define DS5W_E_IO_FAILED _DS5W_ReturnValue::E_IO_FAILED
 
 /// <summary>
 /// Enum for return values
@@ -57,7 +60,7 @@ typedef enum class _DS5W_ReturnValue : unsigned int {
 	E_EXTERNAL_WINAPI = 3,
 
 	/// <summary>
-	/// Not enought memroy on the stack
+	/// Not enought memory on the stack
 	/// </summary>
 	E_STACK_OVERFLOW = 4,
 
@@ -80,5 +83,15 @@ typedef enum class _DS5W_ReturnValue : unsigned int {
 	/// Bluetooth communication error
 	/// </summary>
 	E_BT_COM = 8,
+
+	/// <summary>
+	/// IO timeout
+	/// </summary>
+	E_IO_TIMEOUT = 9,
+
+	/// <summary>
+	/// IO fail
+	/// </summary>
+	E_IO_FAILED = 10,
 
 } DS5W_ReturnValue, DS5W_RV;
