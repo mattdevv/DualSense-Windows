@@ -320,6 +320,11 @@ namespace DS5W {
 		AnalogStick rightStick;
 
 		/// <summary>
+		/// bitflags of buttons, (face | btnsA | btnsB), final 13 bits are empty
+		/// </summary>
+		unsigned int buttonMap;
+
+		/// <summary>
 		/// Left trigger position
 		/// </summary>
 		unsigned char leftTrigger;
@@ -328,21 +333,6 @@ namespace DS5W {
 		/// Right trigger position
 		/// </summary>
 		unsigned char rightTrigger;
-
-		/// <summary>
-		/// Buttons and dpad bitmask DS5W_ISTATE_BTX_?? and DS5W_ISTATE_DPAD_?? indices check with if(buttonsAndDpad & DS5W_ISTATE_DPAD_??)...
-		/// </summary>
-		unsigned char buttonsAndDpad;
-
-		/// <summary>
-		/// Button bitmask A (DS5W_ISTATE_BTN_A_??)
-		/// </summary>
-		unsigned char buttonsA;
-
-		/// <summary>
-		/// Button bitmask B (DS5W_ISTATE_BTN_B_??)
-		/// </summary>
-		unsigned char buttonsB;
 
 		/// <summary>
 		/// Accelerometer

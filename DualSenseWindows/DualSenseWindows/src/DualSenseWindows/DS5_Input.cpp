@@ -12,45 +12,47 @@ void __DS5W::Input::evaluateHidInputBuffer(unsigned char* hidInBuffer, DS5W::DS5
 	ptrInputState->rightTrigger = hidInBuffer[0x05];
 
 	// Buttons
-	ptrInputState->buttonsAndDpad = hidInBuffer[0x07] & 0xF0;
-	ptrInputState->buttonsA = hidInBuffer[0x08];
-	ptrInputState->buttonsB = hidInBuffer[0x09];
+	unsigned char buttonsAndDpad = hidInBuffer[0x07] & 0xF0;
+	unsigned char buttonsA = hidInBuffer[0x08];
+	unsigned char buttonsB = hidInBuffer[0x09];
 
 	// Dpad
 	switch (hidInBuffer[0x07] & 0x0F) {
 		// Up
 	case 0x0:
-		ptrInputState->buttonsAndDpad |= DS5W_ISTATE_DPAD_UP;
+		buttonsAndDpad |= DS5W_ISTATE_DPAD_UP;
 		break;
 		// Down
 	case 0x4:
-		ptrInputState->buttonsAndDpad |= DS5W_ISTATE_DPAD_DOWN;
+		buttonsAndDpad |= DS5W_ISTATE_DPAD_DOWN;
 		break;
 		// Left
 	case 0x6:
-		ptrInputState->buttonsAndDpad |= DS5W_ISTATE_DPAD_LEFT;
+		buttonsAndDpad |= DS5W_ISTATE_DPAD_LEFT;
 		break;
 		// Right
 	case 0x2:
-		ptrInputState->buttonsAndDpad |= DS5W_ISTATE_DPAD_RIGHT;
+		buttonsAndDpad |= DS5W_ISTATE_DPAD_RIGHT;
 		break;
 		// Left Down
 	case 0x5:
-		ptrInputState->buttonsAndDpad |= DS5W_ISTATE_DPAD_LEFT | DS5W_ISTATE_DPAD_DOWN;
+		buttonsAndDpad |= DS5W_ISTATE_DPAD_LEFT | DS5W_ISTATE_DPAD_DOWN;
 		break;
 		// Left Up
 	case 0x7:
-		ptrInputState->buttonsAndDpad |= DS5W_ISTATE_DPAD_LEFT | DS5W_ISTATE_DPAD_UP;
+		buttonsAndDpad |= DS5W_ISTATE_DPAD_LEFT | DS5W_ISTATE_DPAD_UP;
 		break;
 		// Right Up
 	case 0x1:
-		ptrInputState->buttonsAndDpad |= DS5W_ISTATE_DPAD_RIGHT | DS5W_ISTATE_DPAD_UP;
+		buttonsAndDpad |= DS5W_ISTATE_DPAD_RIGHT | DS5W_ISTATE_DPAD_UP;
 		break;
 		// Right Down
 	case 0x3:
-		ptrInputState->buttonsAndDpad |= DS5W_ISTATE_DPAD_RIGHT | DS5W_ISTATE_DPAD_DOWN;
+		buttonsAndDpad |= DS5W_ISTATE_DPAD_RIGHT | DS5W_ISTATE_DPAD_DOWN;
 		break;
 	}
+
+	ptrInputState->buttonMap = (buttonsB << 16) | (buttonsA << 8) | buttonsAndDpad;
 
 	// pointer to raw data in Hid report
 	const short* raw_accelerometer = (short*)&hidInBuffer[0x15];
