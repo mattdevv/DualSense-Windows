@@ -2,15 +2,11 @@
 
 void __DS5W::Output::createHidOutputBuffer(unsigned char* hidOutBuffer, DS5W::DS5OutputState* ptrOutputState) {
 
+	// Feature flags 
 	const unsigned char FEATURES1 = DS5W::DefaultOutputFlags & 0x00FF;
 	const unsigned char FEATURES2 = (DS5W::DefaultOutputFlags & 0xFF00) >> 8;
-
 	hidOutBuffer[0x00] = FEATURES1;
 	hidOutBuffer[0x01] = FEATURES2;
-
-	// feature mask for device
-	//hidOutBuffer[0x00] = (UINT8)ptrOutputState->flags;
-	//hidOutBuffer[0x01] = (UINT8)(ptrOutputState->flags >> 8);
 
 	// Rumble motors
 	hidOutBuffer[0x02] = ptrOutputState->rightRumble;
@@ -19,6 +15,7 @@ void __DS5W::Output::createHidOutputBuffer(unsigned char* hidOutBuffer, DS5W::DS
 	// Mic led
 	hidOutBuffer[0x08] = (unsigned char)ptrOutputState->microphoneLed;
 
+	// strength multiplier for controller/trigger haptics
 	hidOutBuffer[0x24] = ptrOutputState->rumbleStrength;
 
 	// Player led brightness

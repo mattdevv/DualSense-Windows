@@ -241,8 +241,8 @@ DS5W_API void DS5W::freeDeviceContext(DS5W::DeviceContext* ptrContext) {
 		// Send zero output report to disable all onging outputs
 		DS5W::DS5OutputState os;
 		ZeroMemory(&os, sizeof(DS5W::DS5OutputState));
-		os.leftTriggerEffect.effectType = TriggerEffectType::NoResitance;
-		os.rightTriggerEffect.effectType = TriggerEffectType::NoResitance;
+		os.leftTriggerEffect.effectType = TriggerEffectType::ReleaseAll;
+		os.rightTriggerEffect.effectType = TriggerEffectType::ReleaseAll;
 		os.disableLeds = true;
 
 		DS5W::setDeviceOutputState(ptrContext, &os);
