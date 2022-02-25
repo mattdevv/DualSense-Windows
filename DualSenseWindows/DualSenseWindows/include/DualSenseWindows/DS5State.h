@@ -113,7 +113,7 @@ namespace DS5W {
 		/// Battery charge level 0x0 to 
 		/// </summary>
 		unsigned char level;
-	}Battery;
+	} Battery;
 
 	/// <summary>
 	/// State of the mic led
@@ -140,7 +140,7 @@ namespace DS5W {
 	/// </summary>
 	typedef enum class _TriggerEffectType : unsigned char {
 		/// <summary>
-		/// No resistance is applied
+		/// Disable all effects (after trigger is released)
 		/// </summary>
 		NoResitance = 0x00,
 
@@ -153,6 +153,11 @@ namespace DS5W {
 		/// Seciton resistance is appleyed
 		/// </summary>
 		SectionResitance = 0x02,
+
+		/// <summary>
+		/// Disable all effects and release any active tension
+		/// </summary>
+		ReleaseAll = 0x05,
 
 		/// <summary>
 		/// Extended trigger effect
@@ -306,6 +311,47 @@ namespace DS5W {
 	} PlayerLeds;
 
 	/// <summary>
+	/// Flags used by DualSense controller to identify changes output report will perform
+	/// </summary>
+	typedef enum class _OutputFlags : unsigned short
+	{
+		SetMainMotorsA =		1 << 0,		// Allow changing controller haptics. Also requires SetMainMotorsB flag
+		SetMainMotorsB =		1 << 1,		// Allow changing controller haptics. Also requires SetMainMotorsA flag
+		SetTriggerMotorsA =		1 << 2,		// Allow changing trigger haptics. Also requires SetTriggerMotorsB flag
+		SetTriggerMotorsB =		1 << 3,		// Allow changing trigger haptics. Also requires SetTriggerMotorsA flag
+		SetAudioVolume =		1 << 4,		// Enable modification of audio volume
+		EnableAudio =			1 << 5,		// Enable internal speaker (even while headset is connected)
+		SetMicrophoneVolume =	1 << 6,		// Enable modification of microphone volume
+		EnableMicrophone =		1 << 7,		// Enable internal mic (even while headset is connected)
+
+		SetMicrophoneLED =		1 << 8,		// Allow changing microphone LED state
+		SetAudioMicMute =		1 << 9,		// Set microphone to mute when flag is on?
+		SetColorLED =			1 << 10,	// Allow changing lightbar RGB value
+		DisableAllLED =			1 << 11,	// Turn off all lights while flag is set
+		SetPlayerLED =			1 << 12,	// Allow changing which player LEDs are enabled
+		UnknownFlag1 =			1 << 13,	// ?
+		SetMotorStrength =		1 << 14,	// Allow changing rumble strength
+		UnknownFlag2 =			1 << 15,	// ?
+
+	} OutputFlags;
+
+	/// <summary>
+	/// Default output flags to allow changing all settings other than audio/microphone
+	/// </summary>
+	const unsigned short DefaultOutputFlags =
+		(unsigned short)OutputFlags::SetMainMotorsA |
+		(unsigned short)OutputFlags::SetMainMotorsB |
+		(unsigned short)OutputFlags::SetTriggerMotorsA |
+		(unsigned short)OutputFlags::SetTriggerMotorsB |
+		(unsigned short)OutputFlags::SetMicrophoneLED |
+		(unsigned short)OutputFlags::SetAudioMicMute |
+		(unsigned short)OutputFlags::SetColorLED |
+		(unsigned short)OutputFlags::SetPlayerLED |
+		(unsigned short)OutputFlags::UnknownFlag1 |
+		(unsigned short)OutputFlags::SetMotorStrength |
+		(unsigned short)OutputFlags::UnknownFlag2;
+
+	/// <summary>
 	/// Input state of the controler
 	/// </summary>
 	typedef struct _DS5InputState {
@@ -386,6 +432,7 @@ namespace DS5W {
 	} DS5InputState;
 
 	typedef struct _DS5OutputState {
+
 		/// <summary>
 		/// Left / Hard rumbel motor
 		/// </summary>

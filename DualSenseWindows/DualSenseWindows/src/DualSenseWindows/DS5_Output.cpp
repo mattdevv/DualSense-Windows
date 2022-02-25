@@ -1,30 +1,16 @@
 #include "DS5_Output.h"
 
 void __DS5W::Output::createHidOutputBuffer(unsigned char* hidOutBuffer, DS5W::DS5OutputState* ptrOutputState) {
-	// Feature mask
 
-	// 0x01 Set the main motors (also requires flag 0x02)
-	// 0x02 Set the main motors (also requires flag 0x01)
-	// 0x04 Set the right trigger motor
-	// 0x08 Set the left trigger motor
-	// 0x10 Enable modification of audio volume
-	// 0x20 Enable internal speaker (even while headset is connected)
-	// 0x40 Enable modification of microphone volume
-	// 0x80 Enable internal mic (even while headset is connected)
-	const unsigned char FEATURES1 = 0b00001111;
-
-	// 0x01 Toggling microphone LED
-	// 0x02 Toggling Audio/Mic Mute
-	// 0x04 Toggling LED strips on the sides of the Touchpad
-	// 0x08 Turn off all LED lights
-	// 0x10 Toggle player LED lights below Touchpad
-	// 0x20 ???
-	// 0x40 Adjust overall motor/effect power
-	// 0x80 ???
-	const unsigned char FEATURES2 = 0b11110111;
+	const unsigned char FEATURES1 = DS5W::DefaultOutputFlags & 0x00FF;
+	const unsigned char FEATURES2 = (DS5W::DefaultOutputFlags & 0xFF00) >> 8;
 
 	hidOutBuffer[0x00] = FEATURES1;
 	hidOutBuffer[0x01] = FEATURES2;
+
+	// feature mask for device
+	//hidOutBuffer[0x00] = (UINT8)ptrOutputState->flags;
+	//hidOutBuffer[0x01] = (UINT8)(ptrOutputState->flags >> 8);
 
 	// Rumble motors
 	hidOutBuffer[0x02] = ptrOutputState->rightRumble;
