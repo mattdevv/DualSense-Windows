@@ -20,35 +20,35 @@ void __DS5W::Input::evaluateHidInputBuffer(unsigned char* hidInBuffer, DS5W::DS5
 	switch (hidInBuffer[0x07] & 0x0F) {
 		// Up
 	case 0x0:
-		buttonsAndDpad |= DS5W_ISTATE_DPAD_UP;
+		buttonsAndDpad |= DS5W_ISTATE_BTN_DPAD_UP;
 		break;
 		// Down
 	case 0x4:
-		buttonsAndDpad |= DS5W_ISTATE_DPAD_DOWN;
+		buttonsAndDpad |= DS5W_ISTATE_BTN_DPAD_DOWN;
 		break;
 		// Left
 	case 0x6:
-		buttonsAndDpad |= DS5W_ISTATE_DPAD_LEFT;
+		buttonsAndDpad |= DS5W_ISTATE_BTN_DPAD_LEFT;
 		break;
 		// Right
 	case 0x2:
-		buttonsAndDpad |= DS5W_ISTATE_DPAD_RIGHT;
+		buttonsAndDpad |= DS5W_ISTATE_BTN_DPAD_RIGHT;
 		break;
 		// Left Down
 	case 0x5:
-		buttonsAndDpad |= DS5W_ISTATE_DPAD_LEFT | DS5W_ISTATE_DPAD_DOWN;
+		buttonsAndDpad |= DS5W_ISTATE_BTN_DPAD_LEFT | DS5W_ISTATE_BTN_DPAD_DOWN;
 		break;
 		// Left Up
 	case 0x7:
-		buttonsAndDpad |= DS5W_ISTATE_DPAD_LEFT | DS5W_ISTATE_DPAD_UP;
+		buttonsAndDpad |= DS5W_ISTATE_BTN_DPAD_LEFT | DS5W_ISTATE_BTN_DPAD_UP;
 		break;
 		// Right Up
 	case 0x1:
-		buttonsAndDpad |= DS5W_ISTATE_DPAD_RIGHT | DS5W_ISTATE_DPAD_UP;
+		buttonsAndDpad |= DS5W_ISTATE_BTN_DPAD_RIGHT | DS5W_ISTATE_BTN_DPAD_UP;
 		break;
 		// Right Down
 	case 0x3:
-		buttonsAndDpad |= DS5W_ISTATE_DPAD_RIGHT | DS5W_ISTATE_DPAD_DOWN;
+		buttonsAndDpad |= DS5W_ISTATE_BTN_DPAD_RIGHT | DS5W_ISTATE_BTN_DPAD_DOWN;
 		break;
 	}
 
@@ -115,7 +115,7 @@ void __DS5W::Input::evaluateHidInputBuffer(unsigned char* hidInBuffer, DS5W::DS5
 		batteryLevel = min((batteryData & 0x0F) * 10 + 5, 100);
 	}
 
-	ptrInputState->battery.chargin = (hidInBuffer[0x35] & 0x08) != 0;
+	ptrInputState->battery.charging = (hidInBuffer[0x35] & 0x08) != 0;
 	ptrInputState->battery.fullyCharged = batteryFull;
 	ptrInputState->battery.level = batteryLevel;
 }

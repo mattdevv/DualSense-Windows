@@ -10,27 +10,36 @@
 */
 #pragma once
 
-#define DS5W_ISTATE_BTX_SQUARE 0x10
-#define DS5W_ISTATE_BTX_CROSS 0x20
-#define DS5W_ISTATE_BTX_CIRCLE 0x40
-#define DS5W_ISTATE_BTX_TRIANGLE 0x80
-#define DS5W_ISTATE_DPAD_LEFT 0x01
-#define DS5W_ISTATE_DPAD_DOWN 0x02
-#define DS5W_ISTATE_DPAD_RIGHT 0x04
-#define DS5W_ISTATE_DPAD_UP 0x08
+// DPAD buttons
+#define DS5W_ISTATE_BTN_DPAD_LEFT 0x01
+#define DS5W_ISTATE_BTN_DPAD_DOWN 0x02
+#define DS5W_ISTATE_BTN_DPAD_RIGHT 0x04
+#define DS5W_ISTATE_BTN_DPAD_UP 0x08
 
-#define DS5W_ISTATE_BTN_A_LEFT_BUMPER 0x01
-#define DS5W_ISTATE_BTN_A_RIGHT_BUMPER 0x02
-#define DS5W_ISTATE_BTN_A_LEFT_TRIGGER 0x04
-#define DS5W_ISTATE_BTN_A_RIGHT_TRIGGER 0x08
-#define DS5W_ISTATE_BTN_A_SELECT 0x10
-#define DS5W_ISTATE_BTN_A_MENU 0x20
-#define DS5W_ISTATE_BTN_A_LEFT_STICK 0x40
-#define DS5W_ISTATE_BTN_A_RIGHT_STICK 0x80
+// Face buttons
+#define DS5W_ISTATE_BTN_SQUARE 0x10
+#define DS5W_ISTATE_BTN_CROSS 0x20
+#define DS5W_ISTATE_BTN_CIRCLE 0x40
+#define DS5W_ISTATE_BTN_TRIANGLE 0x80
 
-#define DS5W_ISTATE_BTN_B_PLAYSTATION_LOGO 0x01
-#define DS5W_ISTATE_BTN_B_PAD_BUTTON 0x02
-#define DS5W_ISTATE_BTN_B_MIC_BUTTON 0x04
+// Shoulder buttons
+#define DS5W_ISTATE_BTN_BUMPER_LEFT 0x0100
+#define DS5W_ISTATE_BTN_BUMPER_RIGHT 0x0200
+#define DS5W_ISTATE_BTN_TRIGGER_LEFT 0x0400
+#define DS5W_ISTATE_BTN_TRIGGER_RIGHT 0x0800
+
+// Menu buttons
+#define DS5W_ISTATE_BTN_SELECT 0x1000
+#define DS5W_ISTATE_BTN_MENU 0x2000
+
+// Stick buttons
+#define DS5W_ISTATE_BTN_STICK_LEFT 0x4000
+#define DS5W_ISTATE_BTN_STICK_RIGHT 0x8000
+
+// Extra buttons
+#define DS5W_ISTATE_BTN_PLAYSTATION_LOGO 0x010000
+#define DS5W_ISTATE_BTN_PAD_BUTTON 0x020000
+#define DS5W_ISTATE_BTN_MIC_BUTTON 0x040000
 
 #define DS5W_OSTATE_PLAYER_LED_LEFT 0x01
 #define DS5W_OSTATE_PLAYER_LED_MIDDLE_LEFT 0x02
@@ -102,7 +111,7 @@ namespace DS5W {
 		/// <summary>
 		/// Charching state of the battery
 		/// </summary>
-		bool chargin;
+		bool charging;
 
 		/// <summary>
 		/// Indicates that the battery is fully charged
@@ -406,7 +415,7 @@ namespace DS5W {
 		unsigned int currentTime;
 
 		/// <summary>
-		/// Time since last input report in 0.33 microseconds
+		/// Time since last input report. Measured in 0.33 microseconds
 		/// </summary>
 		unsigned int deltaTime;
 

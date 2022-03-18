@@ -19,62 +19,61 @@ Windows API for the PS5 DualSense controller written in C++ for C++ and C#.
 
 ## Using the API
 
-This is the minimal example on how to use the library:
+This is the minimal example on how to use the library, a more in-depth example is included as a separate VS project (DS5W_Test).
 
 ```c++
 #include <Windows.h>
 #include <ds5w.h>
-#include <iostream>
 
-int main(int argc, char** argv){
-   	// Array of controller infos
+int main(int argc, char** argv) {
+	// Array of controller infos
 	DS5W::DeviceEnumInfo infos[16];
-	
+
 	// Number of controllers found
 	unsigned int controllersCount = 0;
-	
+
 	// Call enumerate function and switch on return value
-	switch(DS5W::enumDevices(infos, 16, &controllersCount)){
-		case DS5W_OK:
-        // The buffer was not big enough. Ignore for now
-		case DS5W_E_INSUFFICIENT_BUFFER:
-			break;
-			
+	switch (DS5W::enumDevices(infos, 16, &controllersCount)) {
+	case DS5W_OK:
+		// The buffer was not big enough. Ignore for now
+	case DS5W_E_INSUFFICIENT_BUFFER:
+		break;
+
 		// Any other error will terminate the application
-		default:
-			// Insert your error handling
-			return -1;
+	default:
+		// Insert your error handling
+		return -1;
 	}
-    
-    // Check number of controllers
-    if(!controllersCount){
+
+	// Check number of controllers
+	if (!controllersCount) {
 		return -1;
 	}
 
 	// Context for controller
 	DS5W::DeviceContext con;
-	
+
 	// Init controller and close application is failed
-	if(DS5W_FAILED(DS5W::initDeviceContext(&infos[0], &con))){
+	if (DS5W_FAILED(DS5W::initDeviceContext(&infos[0], &con))) {
 		return -1;
 	}
-    
-   	// Main loop
-	while(true){
-		// Input state
-		DS5W::DS5InputState inState;
-	
+
+	// Input state
+	DS5W::DS5InputState inState;
+
+	// Create struct and zero it
+	DS5W::DS5OutputState outState;
+	ZeroMemory(&outState, sizeof(DS5W::DS5OutputState));
+
+	// Main loop
+	while (true) {
 		// Retrieve data
-		if (DS5W_SUCCESS(DS5W::getDeviceInputState(&con, &inState))){
-			// Check for the Logo button
-			if(inState.buttonsB & DS5W_ISTATE_BTN_B_PLAYSTATION_LOGO){
+		if (DS5W_SUCCESS(DS5W::getDeviceInputState(&con, &inState))) {
+			// Check if the Logo button is pressed (bit flag)
+			if (inState.buttonMap & DS5W_ISTATE_BTN_PLAYSTATION_LOGO) {
 				// Break from while loop
 				break;
 			}
-		
-            // Create struct and zero it
-			DS5W::DS5OutputState outState;
-			ZeroMemory(&outState, sizeof(DS5W::DS5OutputState));
 
 			// Set output data
 			outState.leftRumble = inState.leftTrigger;
@@ -84,12 +83,11 @@ int main(int argc, char** argv){
 			DS5W::setDeviceOutputState(&con, &outState);
 		}
 	}
-	
-	// Shutdown context
+
+	// Shutdown controller
 	DS5W::freeDeviceContext(&con);
-    
-    // Return zero
-   	return 0;
+
+	return 0;
 }
 ``` 
 

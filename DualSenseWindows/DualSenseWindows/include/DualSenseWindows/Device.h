@@ -107,7 +107,7 @@ namespace DS5W {
 			/// <summary>
 			/// Connection of the device
 			/// </summary>
-			DeviceConnection connection;
+			DeviceConnection connectionType;
 
 			/// <summary>
 			/// Collection of values required to parse controller's motion data

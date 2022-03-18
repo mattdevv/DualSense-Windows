@@ -197,7 +197,7 @@ DS5W_API DS5W_ReturnValue DS5W::initDeviceContext(DS5W::DeviceEnumInfo* ptrEnumI
 
 	// Write to context
 	ptrContext->_internal.connected = true;
-	ptrContext->_internal.connection = ptrEnumInfo->_internal.connection;
+	ptrContext->_internal.connectionType = ptrEnumInfo->_internal.connection;
 	ptrContext->_internal.deviceHandle = deviceHandle;
 	wcscpy_s(ptrContext->_internal.devicePath, 260, ptrEnumInfo->_internal.path);
 
@@ -307,7 +307,7 @@ DS5W_API DS5W_ReturnValue DS5W::getDeviceInputState(DS5W::DeviceContext* ptrCont
 
 	// Get input report length
 	unsigned short inputReportLength = 0;
-	if (ptrContext->_internal.connection == DS5W::DeviceConnection::BT) {
+	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
 		// The bluetooth input report is 78 Bytes long
 		inputReportLength = DS_INPUT_REPORT_BT_SIZE;
 		ptrContext->_internal.hidBuffer[0] = DS_OUTPUT_REPORT_BT;
@@ -331,7 +331,7 @@ DS5W_API DS5W_ReturnValue DS5W::getDeviceInputState(DS5W::DeviceContext* ptrCont
 	}
 
 	// Evaluete input buffer
-	if (ptrContext->_internal.connection == DS5W::DeviceConnection::BT) {
+	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
 		// Call bluetooth evaluator if connection is qual to BT
 		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidBuffer[2], ptrInputState, ptrContext);
 	} else {
@@ -356,7 +356,7 @@ DS5W_API DS5W_ReturnValue DS5W::setDeviceOutputState(DS5W::DeviceContext* ptrCon
 
 	// Get otuput report length
 	unsigned short outputReportLength = 0;
-	if (ptrContext->_internal.connection == DS5W::DeviceConnection::BT) {
+	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
 		// The bluetooth output report is 78 Bytes long
 		outputReportLength = DS_OUTPUT_REPORT_BT_SIZE;
 	}
@@ -369,7 +369,7 @@ DS5W_API DS5W_ReturnValue DS5W::setDeviceOutputState(DS5W::DeviceContext* ptrCon
 	ZeroMemory(ptrContext->_internal.hidBuffer, outputReportLength);
 
 	// Build output buffer
-	if (ptrContext->_internal.connection == DS5W::DeviceConnection::BT) {
+	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
 		//return DS5W_E_CURRENTLY_NOT_SUPPORTED;
 		// Report type
 		ptrContext->_internal.hidBuffer[0x00] = DS_OUTPUT_REPORT_BT;
@@ -463,7 +463,7 @@ DS5W_ReturnValue DS5W::getInitialTimestamp(DS5W::DeviceContext* ptrContext)
 
 	// Get input report length
 	unsigned short inputReportLength = 0;
-	if (ptrContext->_internal.connection == DS5W::DeviceConnection::BT) {
+	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
 		// The bluetooth input report is 78 Bytes long
 		inputReportLength = DS_INPUT_REPORT_BT_SIZE;
 		ptrContext->_internal.hidBuffer[0] = DS_OUTPUT_REPORT_BT;
@@ -485,7 +485,7 @@ DS5W_ReturnValue DS5W::getInitialTimestamp(DS5W::DeviceContext* ptrContext)
 	}
 
 	// Evaluete input buffer
-	if (ptrContext->_internal.connection == DS5W::DeviceConnection::BT) {
+	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
 		// offset by 2 bytes if using bluetooth
 		ptrContext->_internal.lastTimestamp = *(unsigned int*)&ptrContext->_internal.hidBuffer[2 + 0x1B];
 	}
