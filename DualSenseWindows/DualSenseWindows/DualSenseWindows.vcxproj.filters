@@ -45,6 +45,9 @@
     <ClInclude Include="include\DualSenseWindows\DeviceSpecs.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="src\MurmurHash3\MurmurHash3.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DualSenseWindows\IO.cpp">
@@ -60,6 +63,9 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="src\DualSenseWindows\DS_CRC32.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MurmurHash3\MurmurHash3.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>

@@ -14,6 +14,8 @@
 #include <DualSenseWindows/DS5_Input.h>
 #include <DualSenseWindows/DS5_Output.h>
 
+#include <MurmurHash3/MurmurHash3.h>
+
 #define NOMINMAX
 
 #include <Windows.h>
@@ -97,6 +99,11 @@ DS5W_API DS5W_ReturnValue DS5W::enumDevices(void* ptrBuffer, unsigned int inArrL
 
 				// Check if ids match
 				if (vendorId == SONY_CORP_VENDOR_ID && productId == DUALSENSE_CONTROLLER_PROD_ID) {
+					// Create unique identifier from device path
+					const UINT32 SEED = 0xABABABAB;
+					UINT32 hashedPath;
+					MurmurHash3_x86_32((void*)devicePath->DevicePath, requiredSize, SEED, &hashedPath);
+
 					// Get pointer to target
 					DS5W::DeviceEnumInfo* ptrInfo = nullptr;
 					if (inputArrIndex < inArrLength) {
@@ -111,6 +118,7 @@ DS5W_API DS5W_ReturnValue DS5W::enumDevices(void* ptrBuffer, unsigned int inArrL
 					// Copy path
 					if (ptrInfo) {
 						wcscpy_s(ptrInfo->_internal.path, 260, (const wchar_t*)devicePath->DevicePath);
+						ptrInfo->_internal.uniqueID = hashedPath;
 					}
 
 					// Get preparsed data
@@ -206,6 +214,7 @@ DS5W_API DS5W_ReturnValue DS5W::initDeviceContext(DS5W::DeviceEnumInfo* ptrEnumI
 	ptrContext->_internal.connected = true;
 	ptrContext->_internal.connectionType = ptrEnumInfo->_internal.connection;
 	ptrContext->_internal.deviceHandle = deviceHandle;
+	ptrContext->_internal.uniqueID = ptrEnumInfo->_internal.uniqueID;
 	wcscpy_s(ptrContext->_internal.devicePath, 260, ptrEnumInfo->_internal.path);
 
 	// create overlapped struct for reading

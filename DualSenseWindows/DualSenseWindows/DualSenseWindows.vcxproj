@@ -331,12 +331,14 @@
     <ClInclude Include="include\DualSenseWindows\DSW_Api.h" />
     <ClInclude Include="include\DualSenseWindows\Helpers.h" />
     <ClInclude Include="include\DualSenseWindows\IO.h" />
+    <ClInclude Include="src\MurmurHash3\MurmurHash3.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\DualSenseWindows\DS5_Input.h" />
     <ClInclude Include="src\DualSenseWindows\DS5_Output.h" />
     <ClInclude Include="src\DualSenseWindows\DS_CRC32.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\MurmurHash3\MurmurHash3.cpp" />
     <ClCompile Include="src\DualSenseWindows\DS5_Input.cpp" />
     <ClCompile Include="src\DualSenseWindows\DS5_Output.cpp" />
     <ClCompile Include="src\DualSenseWindows\DS_CRC32.cpp" />

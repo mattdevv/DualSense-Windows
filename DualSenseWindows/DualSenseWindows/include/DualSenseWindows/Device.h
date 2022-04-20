@@ -80,6 +80,12 @@ namespace DS5W {
 			/// Connection type of the discoverd device
 			/// </summary>
 			DeviceConnection connection;
+
+			/// <summary>
+			/// Unique device identifier
+			/// 32-bit hash of device interface's path
+			/// </summary>
+			UINT32 uniqueID;
 		} _internal;
 	} DeviceEnumInfo;
 
@@ -95,6 +101,12 @@ namespace DS5W {
 			/// Path to the device
 			/// </summary>
 			wchar_t devicePath[260];
+
+			/// <summary>
+			/// Unique device identifier
+			/// 32-bit hash of device interface's path
+			/// </summary>
+			UINT32 uniqueID;
 
 			/// <summary>
 			/// Handle to the open device
