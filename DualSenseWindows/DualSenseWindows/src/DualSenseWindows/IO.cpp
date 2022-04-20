@@ -75,7 +75,14 @@ DS5W_API DS5W_ReturnValue DS5W::enumDevices(void* ptrBuffer, unsigned int inArrL
 
 			// Check if input array has space
 			// Check if device is reachable
-			HANDLE deviceHandle = CreateFileW(devicePath->DevicePath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, NULL, NULL);
+			HANDLE deviceHandle = CreateFileW(
+				devicePath->DevicePath, 
+				NULL,
+				FILE_SHARE_READ | FILE_SHARE_WRITE, 
+				NULL, 
+				OPEN_EXISTING, 
+				NULL, 
+				NULL);
 
 			// Check if device is reachable
 			if (deviceHandle && (deviceHandle != INVALID_HANDLE_VALUE)) {
