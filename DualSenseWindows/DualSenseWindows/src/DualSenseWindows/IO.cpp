@@ -257,39 +257,39 @@ DS5W_API DS5W_ReturnValue DS5W::enumUnknownDevices(void* ptrBuffer, unsigned int
 			devicePath->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
 			SetupDiGetDeviceInterfaceDetailW(hidDiHandle, &ifDiInfo, devicePath, requiredSize, NULL, NULL);
 
-			// Create unique identifier from device path
-			const unsigned int SEED = 0xABABABAB;
-			unsigned int hashedPath;
-			MurmurHash3_x86_32((void*)devicePath->DevicePath, requiredSize, SEED, &hashedPath);
+			// Check if input array has space
+			// Check if device is reachable
+			HANDLE deviceHandle = CreateFileW(
+				devicePath->DevicePath,
+				NULL,
+				FILE_SHARE_READ | FILE_SHARE_WRITE,
+				NULL,
+				OPEN_EXISTING,
+				NULL,
+				NULL);
 
-			// only check devices which are not already known
-			if (!inArray(hashedPath, knownDeviceIDs, numKnownDevices))
-			{
-				// Check if input array has space
-				// Check if device is reachable
-				HANDLE deviceHandle = CreateFileW(
-					devicePath->DevicePath,
-					NULL,
-					FILE_SHARE_READ | FILE_SHARE_WRITE,
-					NULL,
-					OPEN_EXISTING,
-					NULL,
-					NULL);
+			// Check if device is reachable
+			if (deviceHandle && (deviceHandle != INVALID_HANDLE_VALUE)) {
+				// Get vendor and product id
+				unsigned int vendorId = 0;
+				unsigned int productId = 0;
+				HIDD_ATTRIBUTES deviceAttributes;
+				if (HidD_GetAttributes(deviceHandle, &deviceAttributes)) {
+					vendorId = deviceAttributes.VendorID;
+					productId = deviceAttributes.ProductID;
+				}
 
-				// Check if device is reachable
-				if (deviceHandle && (deviceHandle != INVALID_HANDLE_VALUE)) {
-					// Get vendor and product id
-					unsigned int vendorId = 0;
-					unsigned int productId = 0;
-					HIDD_ATTRIBUTES deviceAttributes;
-					if (HidD_GetAttributes(deviceHandle, &deviceAttributes)) {
-						vendorId = deviceAttributes.VendorID;
-						productId = deviceAttributes.ProductID;
-					}
+				// Check if ids match
+				if (vendorId == SONY_CORP_VENDOR_ID && productId == DUALSENSE_CONTROLLER_PROD_ID) 
+				{
+					// Create unique identifier from device path
+					const unsigned int SEED = 0xABABABAB;
+					unsigned int hashedPath;
+					MurmurHash3_x86_32((void*)devicePath->DevicePath, requiredSize, SEED, &hashedPath);
 
-					// Check if ids match
-					if (vendorId == SONY_CORP_VENDOR_ID && productId == DUALSENSE_CONTROLLER_PROD_ID) {
-
+					// only check devices which are not already known
+					if (!inArray(hashedPath, knownDeviceIDs, numKnownDevices))
+					{
 						// Get pointer to target
 						DS5W::DeviceEnumInfo* ptrInfo = nullptr;
 						if (inputArrIndex < inArrLength) {
@@ -336,12 +336,13 @@ DS5W_API DS5W_ReturnValue DS5W::enumUnknownDevices(void* ptrBuffer, unsigned int
 							HidD_FreePreparsedData(ppd);
 						}
 					}
-
-					// Close device
-					CloseHandle(deviceHandle);
 				}
 
+				// Close device
+				CloseHandle(deviceHandle);
 			}
+
+			
 
 			// Increment index
 			ifIndex++;
