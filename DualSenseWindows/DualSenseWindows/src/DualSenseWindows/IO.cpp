@@ -26,10 +26,21 @@
 #include <SetupAPI.h>
 #include <hidsdi.h>
 
+template <class T>
+inline bool inArray(T& item, T* arr, uint32_t size)
+{
+	for (int i = 0; i < size; i++)
+		if (arr[i] == item)
+			return true;
+
+	return false;
+}
+
 DS5W_API DS5W_ReturnValue DS5W::enumDevices(void* ptrBuffer, unsigned int inArrLength, unsigned int* requiredLength, bool pointerToArray) {
+
 	// Check for invalid non expected buffer
-	if (inArrLength && !ptrBuffer) {
-		inArrLength = 0;
+	if (inArrLength == 0 || ptrBuffer == nullptr) {
+		return DS5W_E_INVALID_ARGS;
 	}
 
 	// Get all hid devices from devs
@@ -100,8 +111,8 @@ DS5W_API DS5W_ReturnValue DS5W::enumDevices(void* ptrBuffer, unsigned int inArrL
 				// Check if ids match
 				if (vendorId == SONY_CORP_VENDOR_ID && productId == DUALSENSE_CONTROLLER_PROD_ID) {
 					// Create unique identifier from device path
-					const UINT32 SEED = 0xABABABAB;
-					UINT32 hashedPath;
+					const unsigned int SEED = 0xABABABAB;
+					unsigned int hashedPath;
 					MurmurHash3_x86_32((void*)devicePath->DevicePath, requiredSize, SEED, &hashedPath);
 
 					// Get pointer to target
@@ -169,6 +180,183 @@ DS5W_API DS5W_ReturnValue DS5W::enumDevices(void* ptrBuffer, unsigned int inArrL
 	// Close device enum list
 	SetupDiDestroyDeviceInfoList(hidDiHandle);
 	
+	// Set required size if exists
+	if (requiredLength) {
+		*requiredLength = inputArrIndex;
+	}
+
+	// Check if array was suficient
+	if (inputArrIndex <= inArrLength) {
+		return DS5W_OK;
+	}
+	// Else return error
+	else {
+		return DS5W_E_INSUFFICIENT_BUFFER;
+	}
+}
+
+DS5W_API DS5W_ReturnValue DS5W::enumUnknownDevices(void* ptrBuffer, unsigned int inArrLength, unsigned int* knownDeviceIDs, unsigned int numKnownDevices, unsigned int* requiredLength, bool pointerToArray) {
+	// check for invalid pointer
+	if (knownDeviceIDs == nullptr)
+	{
+		return DS5W_E_INVALID_ARGS;
+	}
+	
+	// Check for empty known devices
+	if (numKnownDevices == 0) {
+		// can do quicker enumDevices call
+		return enumDevices(ptrBuffer, inArrLength, requiredLength, pointerToArray);
+	}
+
+	// Check for invalid non expected buffer
+	if (inArrLength == 0 || ptrBuffer == nullptr) 
+	{
+		return DS5W_E_INVALID_ARGS;
+	}
+
+	// Get all hid devices from devs
+	HANDLE hidDiHandle = SetupDiGetClassDevs(&GUID_DEVINTERFACE_HID, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
+	if (!hidDiHandle || (hidDiHandle == INVALID_HANDLE_VALUE)) {
+		return DS5W_E_EXTERNAL_WINAPI;
+	}
+
+	// Index into input array
+	unsigned int inputArrIndex = 0;
+	bool inputArrOverflow = false;
+
+	// Enumerate over hid device
+	DWORD devIndex = 0;
+	SP_DEVINFO_DATA hidDiInfo;
+	hidDiInfo.cbSize = sizeof(SP_DEVINFO_DATA);
+	while (SetupDiEnumDeviceInfo(hidDiHandle, devIndex, &hidDiInfo)) {
+
+		// Enumerate over all hid device interfaces
+		DWORD ifIndex = 0;
+		SP_DEVICE_INTERFACE_DATA ifDiInfo;
+		ifDiInfo.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
+		while (SetupDiEnumDeviceInterfaces(hidDiHandle, &hidDiInfo, &GUID_DEVINTERFACE_HID, ifIndex, &ifDiInfo)) {
+
+			// Query device path size
+			DWORD requiredSize = 0;
+			SetupDiGetDeviceInterfaceDetailW(hidDiHandle, &ifDiInfo, NULL, 0, &requiredSize, NULL);
+
+			// Check size
+			if (requiredSize > (260 * sizeof(wchar_t))) {
+				SetupDiDestroyDeviceInfoList(hidDiHandle);
+				return DS5W_E_EXTERNAL_WINAPI;
+			}
+
+			// Allocate memory for path on the stack
+			SP_DEVICE_INTERFACE_DETAIL_DATA_W* devicePath = (SP_DEVICE_INTERFACE_DETAIL_DATA_W*)_malloca(requiredSize);
+			if (!devicePath) {
+				SetupDiDestroyDeviceInfoList(hidDiHandle);
+				return DS5W_E_STACK_OVERFLOW;
+			}
+
+			// Get device path
+			devicePath->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
+			SetupDiGetDeviceInterfaceDetailW(hidDiHandle, &ifDiInfo, devicePath, requiredSize, NULL, NULL);
+
+			// Create unique identifier from device path
+			const unsigned int SEED = 0xABABABAB;
+			unsigned int hashedPath;
+			MurmurHash3_x86_32((void*)devicePath->DevicePath, requiredSize, SEED, &hashedPath);
+
+			// only check devices which are not already known
+			if (!inArray(hashedPath, knownDeviceIDs, numKnownDevices))
+			{
+				// Check if input array has space
+				// Check if device is reachable
+				HANDLE deviceHandle = CreateFileW(
+					devicePath->DevicePath,
+					NULL,
+					FILE_SHARE_READ | FILE_SHARE_WRITE,
+					NULL,
+					OPEN_EXISTING,
+					NULL,
+					NULL);
+
+				// Check if device is reachable
+				if (deviceHandle && (deviceHandle != INVALID_HANDLE_VALUE)) {
+					// Get vendor and product id
+					unsigned int vendorId = 0;
+					unsigned int productId = 0;
+					HIDD_ATTRIBUTES deviceAttributes;
+					if (HidD_GetAttributes(deviceHandle, &deviceAttributes)) {
+						vendorId = deviceAttributes.VendorID;
+						productId = deviceAttributes.ProductID;
+					}
+
+					// Check if ids match
+					if (vendorId == SONY_CORP_VENDOR_ID && productId == DUALSENSE_CONTROLLER_PROD_ID) {
+
+						// Get pointer to target
+						DS5W::DeviceEnumInfo* ptrInfo = nullptr;
+						if (inputArrIndex < inArrLength) {
+							if (pointerToArray) {
+								ptrInfo = &(((DS5W::DeviceEnumInfo*)ptrBuffer)[inputArrIndex]);
+							}
+							else {
+								ptrInfo = (((DS5W::DeviceEnumInfo**)ptrBuffer)[inputArrIndex]);
+							}
+						}
+
+						// Copy path
+						if (ptrInfo) {
+							wcscpy_s(ptrInfo->_internal.path, 260, (const wchar_t*)devicePath->DevicePath);
+							ptrInfo->_internal.uniqueID = hashedPath;
+						}
+
+						// Get preparsed data
+						PHIDP_PREPARSED_DATA ppd;
+						if (HidD_GetPreparsedData(deviceHandle, &ppd)) {
+							// Get device capcbilitys
+							HIDP_CAPS deviceCaps;
+							if (HidP_GetCaps(ppd, &deviceCaps) == HIDP_STATUS_SUCCESS) {
+								// Check for device connection type
+								if (ptrInfo) {
+									// Check if controller matches USB specifications
+									if (deviceCaps.InputReportByteLength == DS_INPUT_REPORT_USB_SIZE) {
+										ptrInfo->_internal.connection = DS5W::DeviceConnection::USB;
+
+										// Device found and valid -> Increment index
+										inputArrIndex++;
+									}
+									// Check if controler matches BT specifications
+									else if (deviceCaps.InputReportByteLength == DS_INPUT_REPORT_BT_SIZE) {
+										ptrInfo->_internal.connection = DS5W::DeviceConnection::BT;
+
+										// Device found and valid -> Increment index
+										inputArrIndex++;
+									}
+								}
+							}
+
+							// Free preparsed data
+							HidD_FreePreparsedData(ppd);
+						}
+					}
+
+					// Close device
+					CloseHandle(deviceHandle);
+				}
+
+			}
+
+			// Increment index
+			ifIndex++;
+
+			// Free device from stack
+			_freea(devicePath);
+		}
+
+		// Increment index
+		devIndex++;
+	}
+
+	// Close device enum list
+	SetupDiDestroyDeviceInfoList(hidDiHandle);
+
 	// Set required size if exists
 	if (requiredLength) {
 		*requiredLength = inputArrIndex;
