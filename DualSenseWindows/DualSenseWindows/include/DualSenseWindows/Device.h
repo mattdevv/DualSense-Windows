@@ -144,9 +144,14 @@ namespace DS5W {
 			bool connected;
 
 			/// <summary>
-			/// HID Input buffer (will be allocated by the context init function)
+			/// HID Input buffer
 			/// </summary>
-			unsigned char hidBuffer[78];
+			unsigned char hidInBuffer[DS_MAX_INPUT_REPORT_SIZE];
+
+			/// <summary>
+			/// HID Output buffer
+			/// </summary>
+			unsigned char hidOutBuffer[DS_MAX_OUTPUT_REPORT_SIZE];
 		}_internal;
 	} DeviceContext;
 }

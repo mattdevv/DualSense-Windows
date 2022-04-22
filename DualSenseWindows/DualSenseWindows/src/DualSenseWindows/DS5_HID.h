@@ -27,42 +27,23 @@
 */
 #pragma once
 
-#include <DualSenseWindows/DSW_Api.h>
 #include <DualSenseWindows/Device.h>
 #include <DualSenseWindows/DS5State.h>
 #include <DualSenseWindows/DeviceSpecs.h>
 
 namespace DS5W {
+	/// <summary>
+	/// fill buffer with HID input report where id = buffer[0]
+	/// </summary>
+	DWORD getHIDInputReport(UCHAR reportID, HANDLE device, OVERLAPPED* ol, UCHAR* buffer, size_t length, int milliseconds);
 
 	/// <summary>
-	/// Sets an output report to disable all features (lights, rumble, etc.)
+	/// copy from buffer to device the HID output report where id = buffer[0]
 	/// </summary>
-	/// <param name="reportBuffer">Pointer to start of output report (skipping report id)</param>
-	/// <param name="reportLength">Size of output buffer</param>
-	void setOutputStateOff(UCHAR* reportBuffer, USHORT reportLength);
+	DWORD setHIDOutputReport(UCHAR reportID, HANDLE device, OVERLAPPED* ol, UCHAR* buffer, size_t length);
 
 	/// <summary>
-	/// Set all DualSense features to off (rumble, lights, trigger-effects)
+	/// fill buffer with HID feature report where id = buffer[0]
 	/// </summary>
-	/// <param name="ptrContext">Pointer to context</param>
-	void disableAllDeviceFeatures(DS5W::DeviceContext* ptrContext);
-
-	/// <summary>
-	/// Disconnect from windows and mark device as disconnected
-	/// </summary>
-	/// <param name="ptrContext">Device to be disconnected</param>
-	void disconnectDevice(DS5W::DeviceContext* ptrContext);
-
-	DS5W_ReturnValue getCalibrationData(DS5W::DeviceContext* ptrContext);
-	DS5W_ReturnValue getInitialTimestamp(DS5W::DeviceContext* ptrContext);
-
-	/// <summary>
-	/// Get input report
-	/// </summary>
-	/// <param name="ptrContext">Pointer to context</param>
-	/// <param name="length">Size of input report</param>
-	/// <param name="milliseconds">Maximum time to wait (0 = infinite)</param>
-	/// <returns>Error code of call</returns>
-	DS5W_ReturnValue getInputReport(DS5W::DeviceContext* ptrContext, UCHAR reportID, USHORT reportLen, int waitTime);
-	DS5W_ReturnValue setOutputReport(DS5W::DeviceContext* ptrContext, UCHAR reportID, USHORT reportLen);
+	DWORD getHIDFeatureReport(UCHAR reportID, HANDLE device, OVERLAPPED* ol, UCHAR* buffer, size_t length);
 }

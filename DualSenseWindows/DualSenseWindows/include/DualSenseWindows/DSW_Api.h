@@ -32,9 +32,8 @@
 #define DS5W_E_CURRENTLY_NOT_SUPPORTED _DS5W_ReturnValue::E_CURRENTLY_NOT_SUPPORTED
 #define DS5W_E_DEVICE_REMOVED _DS5W_ReturnValue::E_DEVICE_REMOVED
 #define DS5W_E_BT_COM _DS5W_ReturnValue::E_BT_COM
-#define DS5W_E_IO_TIMEDOUT _DS5W_ReturnValue::E_IO_TIMEOUT
+#define DS5W_E_IO_TIMEDOUT _DS5W_ReturnValue::E_IO_TIMEDOUT
 #define DS5W_E_IO_FAILED _DS5W_ReturnValue::E_IO_FAILED
-#define DS5W_E_IO_FAILED_START _DS5W_ReturnValue::E_IO_FAILED_START
 
 /// <summary>
 /// Enum for return values
@@ -88,16 +87,11 @@ typedef enum class _DS5W_ReturnValue : unsigned int {
 	/// <summary>
 	/// IO timeout
 	/// </summary>
-	E_IO_TIMEOUT = 9,
+	E_IO_TIMEDOUT = 9,
 
 	/// <summary>
 	/// IO failed
 	/// </summary>
 	E_IO_FAILED = 10,
-
-	/// <summary>
-	/// IO failed to start
-	/// </summary>
-	E_IO_FAILED_START = 11
 
 } DS5W_ReturnValue, DS5W_RV;

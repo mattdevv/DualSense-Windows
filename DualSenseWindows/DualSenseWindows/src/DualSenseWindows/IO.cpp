@@ -421,19 +421,19 @@ DS5W_API DS5W_ReturnValue DS5W::initDeviceContext(DS5W::DeviceEnumInfo* ptrEnumI
 	// get calibration data so gyroscope/acceleration data can be decoded properly
 	_DS5W_ReturnValue err = getCalibrationData(ptrContext);
 	if (!DS5W_SUCCESS(err))
-		goto setupfailed;
+		goto initFailed;
 
 	// get timestamp so deltatime is valid
 	err = getInitialTimestamp(ptrContext);
 	if (!DS5W_SUCCESS(err))
-		goto setupfailed;
+		goto initFailed;
 
 	// Return OK
 	return DS5W_OK;
 
-setupfailed:
+initFailed:
 	// Close handle and set error state
-	shutdownDevice(ptrContext);
+	disconnectDevice(ptrContext);
 
 	// Return error
 	return err;
@@ -509,7 +509,7 @@ DS5W_API DS5W_ReturnValue DS5W::reconnectDevice(DS5W::DeviceContext* ptrContext)
 	if (!DS5W_SUCCESS(err))
 	{
 		// Close handle and set error state
-		shutdownDevice(ptrContext);
+		disconnectDevice(ptrContext);
 
 		// Return error
 		return err;
@@ -530,38 +530,37 @@ DS5W_API DS5W_ReturnValue DS5W::getDeviceInputState(DS5W::DeviceContext* ptrCont
 		return DS5W_E_DEVICE_REMOVED;
 	}
 
-	// Get the most recent package
-	HidD_FlushQueue(ptrContext->_internal.deviceHandle);
+	UCHAR inputReportID;
+	USHORT inputReportLength;
 
-	// Get input report length
-	unsigned short inputReportLength = 0;
+	// get report info
 	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
-		// The bluetooth input report is 78 Bytes long
+		inputReportID = DS_INPUT_REPORT_BT;
 		inputReportLength = DS_INPUT_REPORT_BT_SIZE;
-		ptrContext->_internal.hidBuffer[0] = DS_OUTPUT_REPORT_BT;
 	}
 	else {
-		// The usb input report is 64 Bytes long
+		inputReportID = DS_INPUT_REPORT_USB;
 		inputReportLength = DS_INPUT_REPORT_USB_SIZE;
-		ptrContext->_internal.hidBuffer[0] = DS_INPUT_REPORT_USB;
 	}
 
 	// Get device input
-	const int timeoutMS = 30;
-	DS5W_RV err = getInputReport(ptrContext, inputReportLength, timeoutMS);
+	DS5W_RV err = getInputReport(ptrContext, inputReportID, inputReportLength, IO_TIMEOUT_MILLISECONDS);
 
+	// error check
 	if (!DS5W_SUCCESS(err)) {
-		// Return error
+		if (err == DS5W_E_DEVICE_REMOVED){
+			disconnectDevice(ptrContext);
+		}
 		return err;
 	}
 
 	// Evaluete input buffer
 	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
 		// Call bluetooth evaluator if connection is qual to BT
-		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidBuffer[2], ptrInputState, ptrContext);
+		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidInBuffer[2], ptrInputState, ptrContext);
 	} else {
 		// Else it is USB so call its evaluator
-		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidBuffer[1], ptrInputState, ptrContext);
+		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidInBuffer[1], ptrInputState, ptrContext);
 	}
 	
 	// Return ok
@@ -578,50 +577,46 @@ DS5W_API DS5W_ReturnValue DS5W::setDeviceOutputState(DS5W::DeviceContext* ptrCon
 	if (ptrContext->_internal.connected == false) {
 		return DS5W_E_DEVICE_REMOVED;
 	}
+	
+	UCHAR outputReportID;
+	USHORT outputReportLength;
 
-	// Get otuput report length
-	unsigned short outputReportLength = 0;
+	// Get output report info and build buffer
 	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
-		// The bluetooth output report is 78 Bytes long
+		// report info
+		outputReportID = DS_OUTPUT_REPORT_BT;
 		outputReportLength = DS_OUTPUT_REPORT_BT_SIZE;
+
+		// build buffer
+		ZeroMemory(ptrContext->_internal.hidOutBuffer, outputReportLength);
+		ptrContext->_internal.hidOutBuffer[0x01] = 0x02;	// magic value?
+		__DS5W::Output::createHidOutputBuffer(&ptrContext->_internal.hidOutBuffer[2], ptrOutputState);
+
+		// BT buffer also needs a hash
+		const UINT32 crcChecksum = __DS5W::CRC32::compute(ptrContext->_internal.hidOutBuffer, DS_OUTPUT_REPORT_BT_SIZE - 4);
+		ptrContext->_internal.hidOutBuffer[0x4A] = (unsigned char)((crcChecksum & 0x000000FF) >> 0UL);
+		ptrContext->_internal.hidOutBuffer[0x4B] = (unsigned char)((crcChecksum & 0x0000FF00) >> 8UL);
+		ptrContext->_internal.hidOutBuffer[0x4C] = (unsigned char)((crcChecksum & 0x00FF0000) >> 16UL);
+		ptrContext->_internal.hidOutBuffer[0x4D] = (unsigned char)((crcChecksum & 0xFF000000) >> 24UL);
 	}
 	else {
-		// The usb output report is 63 Bytes long
+		// report info
+		outputReportID = DS_OUTPUT_REPORT_USB;
 		outputReportLength = DS_OUTPUT_REPORT_USB_SIZE;
-	}
 
-	// Cleat all input data
-	ZeroMemory(ptrContext->_internal.hidBuffer, outputReportLength);
-
-	// Build output buffer
-	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
-		//return DS5W_E_CURRENTLY_NOT_SUPPORTED;
-		// Report type
-		ptrContext->_internal.hidBuffer[0x00] = DS_OUTPUT_REPORT_BT;
-		ptrContext->_internal.hidBuffer[0x01] = 0x02;	// magic value?
-		__DS5W::Output::createHidOutputBuffer(&ptrContext->_internal.hidBuffer[2], ptrOutputState);
-
-		// Hash
-		const UINT32 crcChecksum = __DS5W::CRC32::compute(ptrContext->_internal.hidBuffer, DS_OUTPUT_REPORT_BT_SIZE - 4);
-
-		ptrContext->_internal.hidBuffer[0x4A] = (unsigned char)((crcChecksum & 0x000000FF) >> 0UL);
-		ptrContext->_internal.hidBuffer[0x4B] = (unsigned char)((crcChecksum & 0x0000FF00) >> 8UL);
-		ptrContext->_internal.hidBuffer[0x4C] = (unsigned char)((crcChecksum & 0x00FF0000) >> 16UL);
-		ptrContext->_internal.hidBuffer[0x4D] = (unsigned char)((crcChecksum & 0xFF000000) >> 24UL);
-		
-	}
-	else {
-		// Report type
-		ptrContext->_internal.hidBuffer[0x00] = DS_OUTPUT_REPORT_USB;
-
-		// Else it is USB so call its evaluator
-		__DS5W::Output::createHidOutputBuffer(&ptrContext->_internal.hidBuffer[1], ptrOutputState);
+		// build buffer
+		ZeroMemory(ptrContext->_internal.hidOutBuffer, outputReportLength);
+		__DS5W::Output::createHidOutputBuffer(&ptrContext->_internal.hidOutBuffer[1], ptrOutputState);
 	}
 
 	// Write to controller
-	DS5W_RV err = setOutputReport(ptrContext, outputReportLength);
+	DS5W_RV err = setOutputReport(ptrContext, outputReportID, outputReportLength);
+
+	// error check
 	if (!DS5W_SUCCESS(err)) {
-		// Return error
+		if (err == DS5W_E_DEVICE_REMOVED) {
+			disconnectDevice(ptrContext);
+		}
 		return err;
 	}
 
