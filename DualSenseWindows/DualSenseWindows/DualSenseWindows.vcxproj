@@ -325,6 +325,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\DualSenseWindows\DS5_HID.h" />
+    <ClInclude Include="src\DualSenseWindows\DS5_Internal.h" />
     <ClInclude Include="include\DualSenseWindows\Device.h" />
     <ClInclude Include="include\DualSenseWindows\DeviceSpecs.h" />
     <ClInclude Include="include\DualSenseWindows\DS5State.h" />
@@ -338,6 +340,8 @@
     <ClInclude Include="src\DualSenseWindows\DS_CRC32.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\DualSenseWindows\DS5_HID.cpp" />
+    <ClCompile Include="src\DualSenseWindows\DS5_Internal.cpp" />
     <ClCompile Include="src\MurmurHash3\MurmurHash3.cpp" />
     <ClCompile Include="src\DualSenseWindows\DS5_Input.cpp" />
     <ClCompile Include="src\DualSenseWindows\DS5_Output.cpp" />
