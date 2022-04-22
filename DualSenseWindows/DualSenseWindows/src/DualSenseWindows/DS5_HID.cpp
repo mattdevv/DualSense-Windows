@@ -36,19 +36,27 @@ if (!res) {\
 	return GetLastError();\
 }\
 
-DWORD DS5W::getHIDInputReport(UCHAR reportID, HANDLE device, OVERLAPPED* ol, UCHAR* buffer, size_t length, int milliseconds)
+DWORD DS5W::AwaitOverlapped(HANDLE device, OVERLAPPED * ol)
 {
-	buffer[0] = reportID;
-
-	DWORD bytes_read = 0;
+	DWORD bytes_passed;
 	BOOL res;
 
-	// Start an Overlapped I/O read
-	ResetEvent(ol->hEvent);
-	res = ReadFile(device, buffer, length, &bytes_read, ol);
+	// wait/check read ended correctly with infinite wait
+	res = GetOverlappedResult(device, ol, &bytes_passed, TRUE);
+	CHECK_OVERLAPPED_FINISHED(res);
 
-	// check if request started correctly
-	CHECK_OVERLAPPED_STARTED(res);
+	/* bytes_read does not include the first byte which contains the
+	   report ID. The data buffer actually contains one more byte than
+	   bytes_read. */
+	bytes_passed++;
+
+	return 0;
+}
+
+DWORD DS5W::AwaitOverlappedTimeout(HANDLE device, OVERLAPPED* ol, int milliseconds)
+{
+	DWORD bytes_passed;
+	BOOL res;
 
 	// wait for input report with timeout (if needed)
 	if (milliseconds > 0) {
@@ -62,36 +70,38 @@ DWORD DS5W::getHIDInputReport(UCHAR reportID, HANDLE device, OVERLAPPED* ol, UCH
 	}
 
 	// wait/check read ended correctly with infinite wait
-	res = GetOverlappedResult(device, ol, &bytes_read, TRUE);
+	res = GetOverlappedResult(device, ol, &bytes_passed, TRUE);
 	CHECK_OVERLAPPED_FINISHED(res);
 
 	/* bytes_read does not include the first byte which contains the
 	   report ID. The data buffer actually contains one more byte than
 	   bytes_read. */
-	bytes_read++;
+	bytes_passed++;
+
+	return 0;
+}
+
+DWORD DS5W::getHIDInputReport(UCHAR reportID, HANDLE device, OVERLAPPED* ol, UCHAR* buffer, size_t length, int milliseconds)
+{
+	// start IO request and check it began correctly
+	DWORD err = getHIDInputReportOverlapped(reportID, device, ol, buffer, length);
+	if (err) return err;
+
+	err = AwaitOverlappedTimeout(device, ol, milliseconds);
+	if (err) return err;
 
 	return 0;
 }
 
 DWORD DS5W::setHIDOutputReport(UCHAR reportID, HANDLE device, OVERLAPPED* ol, UCHAR* buffer, size_t length)
 {
-	buffer[0] = reportID;
+	// start IO request and check it began correctly
+	DWORD err = setHIDOutputReportOverlapped(reportID, device, ol, buffer, length);
+	if (err) return err;
 
-	DWORD bytes_written;
-	BOOL res;
-
-	// Start an overlapped write
-	ResetEvent(ol->hEvent);
-	res = WriteFile(device, buffer, length, &bytes_written, ol);
-
-	// check if request started correctly
-	CHECK_OVERLAPPED_STARTED(res);
-
-	// wait/check write ended correctly with infinite wait
-	res = GetOverlappedResult(device, ol, &bytes_written, TRUE/*wait*/);
-	if (!res) {
-		return GetLastError();
-	}
+	// run request synchronously and check there were no errors
+	err = AwaitOverlapped(device, ol);
+	if (err) return err;
 
 	return 0;
 }
@@ -114,14 +124,42 @@ DWORD DS5W::getHIDFeatureReport(UCHAR reportID, HANDLE device, OVERLAPPED* ol, U
 	// check if request started correctly
 	CHECK_OVERLAPPED_STARTED(res);
 
-	// wait/check read ended correctly with infinite wait
-	res = GetOverlappedResult(device, ol, &bytes_returned, TRUE/*wait*/);
-	CHECK_OVERLAPPED_FINISHED(res);
+	// run request synchronously and check there were no errors
+	DWORD err = AwaitOverlapped(device, ol);
+	if (err) return err;
 
-	/* bytes_returned does not include the first byte which contains the
-	   report ID. The data buffer actually contains one more byte than
-	   bytes_returned. */
-	bytes_returned++;
+	return 0;
+}
+
+DWORD DS5W::getHIDInputReportOverlapped(UCHAR reportID, HANDLE device, OVERLAPPED* ol, UCHAR* buffer, size_t length)
+{
+	buffer[0] = reportID;
+
+	DWORD bytes_read = 0;
+	BOOL res;
+
+	// Start an Overlapped I/O read
+	ResetEvent(ol->hEvent);
+	res = ReadFile(device, buffer, length, NULL, ol);
+
+	// check if request started correctly
+	CHECK_OVERLAPPED_STARTED(res);
+
+	return 0;
+}
+
+DWORD DS5W::setHIDOutputReportOverlapped(UCHAR reportID, HANDLE device, OVERLAPPED* ol, UCHAR* buffer, size_t length)
+{
+	buffer[0] = reportID;
+
+	BOOL res;
+
+	// Start an overlapped write
+	ResetEvent(ol->hEvent);
+	res = WriteFile(device, buffer, length, NULL, ol);
+
+	// check if request started correctly
+	CHECK_OVERLAPPED_STARTED(res);
 
 	return 0;
 }
