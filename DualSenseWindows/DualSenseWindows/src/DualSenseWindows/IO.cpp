@@ -379,7 +379,7 @@ DS5W_API DS5W_ReturnValue DS5W::initDeviceContext(DS5W::DeviceEnumInfo* ptrEnumI
 		return DS5W_E_INVALID_ARGS;
 	}
 
-	// Check len
+	// Check length
 	if (wcslen(ptrEnumInfo->_internal.path) == 0) {
 		return DS5W_E_INVALID_ARGS;
 	}
@@ -394,9 +394,12 @@ DS5W_API DS5W_ReturnValue DS5W::initDeviceContext(DS5W::DeviceEnumInfo* ptrEnumI
 		FILE_FLAG_OVERLAPPED, 
 		NULL);
 
-	if (!deviceHandle || (deviceHandle == INVALID_HANDLE_VALUE)) {
-		CloseHandle(deviceHandle);
-		return DS5W_E_DEVICE_REMOVED;
+	// Check success
+	if (deviceHandle == INVALID_HANDLE_VALUE) {
+		if (GetLastError() == ERROR_FILE_NOT_FOUND)
+			return DS5W_E_DEVICE_REMOVED;
+
+		return DS5W_E_EXTERNAL_WINAPI;
 	}
 
 	// Write to context
@@ -414,47 +417,39 @@ DS5W_API DS5W_ReturnValue DS5W::initDeviceContext(DS5W::DeviceEnumInfo* ptrEnumI
 	memset(&(ptrContext->_internal.olWrite), 0, sizeof(OVERLAPPED));
 	ptrContext->_internal.olWrite.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 	
-	// get calibration data
-	_DS5W_ReturnValue err = getCalibrationReport(ptrContext);
+	// get calibration data so gyroscope/acceleration data can be decoded properly
+	_DS5W_ReturnValue err = getCalibrationData(ptrContext);
 	if (!DS5W_SUCCESS(err))
-	{
-		// Close handle and set error state
-		DisconnectController(ptrContext);
-
-		// Return error
-		return err;
-	}
+		goto setupfailed;
 
 	// get timestamp so deltatime is valid
 	err = getInitialTimestamp(ptrContext);
 	if (!DS5W_SUCCESS(err))
-	{
-		// Close handle and set error state
-		DisconnectController(ptrContext);
-
-		// Return error
-		return err;
-	}
+		goto setupfailed;
 
 	// Return OK
 	return DS5W_OK;
+
+setupfailed:
+	// Close handle and set error state
+	disconnectDevice(ptrContext);
+
+	// Return error
+	return err;
 }
 
 DS5W_API void DS5W::freeDeviceContext(DS5W::DeviceContext* ptrContext) {
-	// Check if handle is existing
-	if (ptrContext->_internal.connected) {
-		// Send zero output report to disable all onging outputs
-		DS5W::DS5OutputState os;
-		ZeroMemory(&os, sizeof(DS5W::DS5OutputState));
-		os.leftTriggerEffect.effectType = TriggerEffectType::ReleaseAll;
-		os.rightTriggerEffect.effectType = TriggerEffectType::ReleaseAll;
-		os.disableLeds = true;
-
-		DS5W::setDeviceOutputState(ptrContext, &os);
-
-		DisconnectController(ptrContext);
+	// Check pointer
+	if (!ptrContext) {
+		return;
 	}
 
+	// Turn off controller first if still connected
+	if (ptrContext->_internal.connected) {
+		disconnectDevice(ptrContext);
+	}
+
+	// Free Windows events for I/O
 	CloseHandle(ptrContext->_internal.olRead.hEvent);
 	CloseHandle(ptrContext->_internal.olWrite.hEvent);
 	
@@ -465,8 +460,44 @@ DS5W_API void DS5W::freeDeviceContext(DS5W::DeviceContext* ptrContext) {
 	ptrContext->_internal.devicePath[0] = 0x0;
 }
 
+DS5W_API void DS5W::disconnectDevice(DS5W::DeviceContext* ptrContext)
+{
+	// Check pointer
+	if (!ptrContext) {
+		return;
+	}
+
+	// Skip if already disconnected
+	if (ptrContext->_internal.connected == false)
+		return;
+
+	// Turn off all features to prevent infinite rumble
+	disableAllDeviceFeatures(ptrContext);
+
+	// Prevent further IO calls by marking disconnected
+	ptrContext->_internal.connected = false;
+
+	// Ensure no outstanding IO calls
+	const int maxWait_ms = 50;
+	WaitForSingleObject(ptrContext->_internal.olRead.hEvent, maxWait_ms);
+	WaitForSingleObject(ptrContext->_internal.olRead.hEvent, maxWait_ms);
+
+	// Free in Windows
+	CloseHandle(ptrContext->_internal.deviceHandle);
+	ptrContext->_internal.deviceHandle = NULL;
+}
+
 DS5W_API DS5W_ReturnValue DS5W::reconnectDevice(DS5W::DeviceContext* ptrContext) {	
-	// Check len
+	// Check pointer
+	if (!ptrContext) {
+		return DS5W_E_INVALID_ARGS;
+	}
+
+	// Skip if already connected
+	if (ptrContext->_internal.connected == true)
+		return DS5W_OK;
+	
+	// Check length
 	if (wcslen(ptrContext->_internal.devicePath) == 0) {
 		return DS5W_E_INVALID_ARGS;
 	}
@@ -486,7 +517,7 @@ DS5W_API DS5W_ReturnValue DS5W::reconnectDevice(DS5W::DeviceContext* ptrContext)
 	if (!DS5W_SUCCESS(err))
 	{
 		// Close handle and set error state
-		DisconnectController(ptrContext);
+		disconnectDevice(ptrContext);
 
 		// Return error
 		return err;
@@ -503,7 +534,7 @@ DS5W_API DS5W_ReturnValue DS5W::getDeviceInputState(DS5W::DeviceContext* ptrCont
 	}
 
 	// Check for connection
-	if (!ptrContext->_internal.connected) {
+	if (ptrContext->_internal.connected == false) {
 		return DS5W_E_DEVICE_REMOVED;
 	}
 
@@ -524,13 +555,10 @@ DS5W_API DS5W_ReturnValue DS5W::getDeviceInputState(DS5W::DeviceContext* ptrCont
 	}
 
 	// Get device input
-	const int timeoutMS = 50;
+	const int timeoutMS = 30;
 	DS5W_RV err = getInputReport(ptrContext, inputReportLength, timeoutMS);
 
 	if (!DS5W_SUCCESS(err)) {
-		// Close handle and set error state
-		DisconnectController(ptrContext);
-
 		// Return error
 		return err;
 	}
@@ -555,7 +583,7 @@ DS5W_API DS5W_ReturnValue DS5W::setDeviceOutputState(DS5W::DeviceContext* ptrCon
 	}
 
 	// Check for connection
-	if (!ptrContext->_internal.connected) {
+	if (ptrContext->_internal.connected == false) {
 		return DS5W_E_DEVICE_REMOVED;
 	}
 
@@ -601,9 +629,6 @@ DS5W_API DS5W_ReturnValue DS5W::setDeviceOutputState(DS5W::DeviceContext* ptrCon
 	// Write to controller
 	DS5W_RV err = setOutputReport(ptrContext, outputReportLength);
 	if (!DS5W_SUCCESS(err)) {
-		// Close handle and set error state
-		DisconnectController(ptrContext);
-
 		// Return error
 		return err;
 	}
@@ -612,25 +637,21 @@ DS5W_API DS5W_ReturnValue DS5W::setDeviceOutputState(DS5W::DeviceContext* ptrCon
 	return DS5W_OK;
 }
 
-void DS5W::DisconnectController(DS5W::DeviceContext* ptrContext)
+void DS5W::disableAllDeviceFeatures(DS5W::DeviceContext* ptrContext)
 {
-	CloseHandle(ptrContext->_internal.deviceHandle);
-	ptrContext->_internal.deviceHandle = NULL;
-	ptrContext->_internal.connected = false;
+	DS5W::DS5OutputState os;
+
+	// Set all device features to off
+	ZeroMemory(&os, sizeof(DS5W::DS5OutputState));
+	os.leftTriggerEffect.effectType = TriggerEffectType::ReleaseAll;
+	os.rightTriggerEffect.effectType = TriggerEffectType::ReleaseAll;
+	os.disableLeds = true;
+
+	DS5W::setDeviceOutputState(ptrContext, &os);
 }
 
-DS5W_ReturnValue DS5W::getCalibrationReport(DS5W::DeviceContext* ptrContext)
+DS5W_ReturnValue DS5W::getCalibrationData(DS5W::DeviceContext* ptrContext)
 {
-	// Check pointer
-	if (!ptrContext) {
-		return DS5W_E_INVALID_ARGS;
-	}
-
-	// Check for connection
-	if (!ptrContext->_internal.connected) {
-		return DS5W_E_DEVICE_REMOVED;
-	}
-
 	// set which report to read
 	ptrContext->_internal.hidBuffer[0] = DS_FEATURE_REPORT_CALIBRATION;
 
@@ -638,9 +659,6 @@ DS5W_ReturnValue DS5W::getCalibrationReport(DS5W::DeviceContext* ptrContext)
 	DS5W_RV err = getFeatureReport(ptrContext, DS_FEATURE_REPORT_CALIBRATION_SIZE);
 	if (!DS5W_SUCCESS(err))
 	{
-		// Close handle and set error state
-		DisconnectController(ptrContext);
-
 		// Return error
 		return err;
 	}
@@ -653,16 +671,6 @@ DS5W_ReturnValue DS5W::getCalibrationReport(DS5W::DeviceContext* ptrContext)
 
 DS5W_ReturnValue DS5W::getInitialTimestamp(DS5W::DeviceContext* ptrContext)
 {
-	// Check pointer
-	if (!ptrContext) {
-		return DS5W_E_INVALID_ARGS;
-	}
-
-	// Check for connection
-	if (!ptrContext->_internal.connected) {
-		return DS5W_E_DEVICE_REMOVED;
-	}
-
 	// Get the most recent package
 	HidD_FlushQueue(ptrContext->_internal.deviceHandle);
 
@@ -682,21 +690,18 @@ DS5W_ReturnValue DS5W::getInitialTimestamp(DS5W::DeviceContext* ptrContext)
 	// Get device input
 	DS5W_RV err = getInputReport(ptrContext, inputReportLength, 100);
 	if (!DS5W_SUCCESS(err)) {
-		// Close handle and set error state
-		DisconnectController(ptrContext);
-
 		// Return error
 		return err;
 	}
 
 	// Evaluete input buffer
 	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
-		// offset by 2 bytes if using bluetooth
-		ptrContext->_internal.lastTimestamp = *(unsigned int*)&ptrContext->_internal.hidBuffer[2 + 0x1B];
+		// timestamp is offset by 2 bytes if using bluetooth
+		ptrContext->_internal.timestamp = *(unsigned int*)&ptrContext->_internal.hidBuffer[2 + 0x1B];
 	}
 	else {
-		// offset by 1 bytes if using usb
-		ptrContext->_internal.lastTimestamp = *(unsigned int*)&ptrContext->_internal.hidBuffer[1 + 0x1B];
+		// timestamp is offset by 1 byte if using usb
+		ptrContext->_internal.timestamp = *(unsigned int*)&ptrContext->_internal.hidBuffer[1 + 0x1B];
 	}
 
 	// Return ok
@@ -712,34 +717,34 @@ DS5W_ReturnValue DS5W::getInputReport(DS5W::DeviceContext* ptrContext, size_t le
 	ResetEvent(ptrContext->_internal.olRead.hEvent);
 	res = ReadFile(ptrContext->_internal.deviceHandle, ptrContext->_internal.hidBuffer, length, &bytes_read, &ptrContext->_internal.olRead);
 
+	// check if request started correctly
 	if (!res) {
 		if (GetLastError() != ERROR_IO_PENDING) {
-			// ReadFile() has failed
-			// Clean up and return error
-			CancelIo(ptrContext->_internal.deviceHandle);
 			return DS5W_E_IO_FAILED;
 		}
 	}
 	
-	if (milliseconds >= 0) {
-		// check if a report was found
+	// wait for input report with timeout (if needed)
+	if (milliseconds > 0) {
 		res = WaitForSingleObject(ptrContext->_internal.olRead.hEvent, milliseconds);
 		if (res != WAIT_OBJECT_0) {
 			// WaitForSingleObject() timed out with no read
 			// assume it failed and cleanup
 			CancelIo(ptrContext->_internal.deviceHandle);
-			return DS5W_E_IO_TIMEOUT;
+			return DS5W_E_IO_TIMEDOUT;
 		}
 	}
 
-	/* Either WaitForSingleObject() told us that ReadFile has completed, or
-	   we are in non-blocking mode. Get the number of bytes read. The actual
-	   data has been copied to the data[] array which was passed to ReadFile(). */
+	// wait/check read ended correctly with infinite wait
 	res = GetOverlappedResult(ptrContext->_internal.deviceHandle, &ptrContext->_internal.olRead, &bytes_read, TRUE);
-
 	if (!res) {
 		return DS5W_E_IO_FAILED;
 	}
+
+	/* bytes_read does not include the first byte which contains the
+	   report ID. The data buffer actually contains one more byte than
+	   bytes_read. */
+	bytes_read++;
 
 	return DS5W_OK;
 }
@@ -749,21 +754,20 @@ DS5W_ReturnValue DS5W::setOutputReport(DS5W::DeviceContext* ptrContext, size_t l
 	DWORD bytes_written;
 	BOOL res;
 
+	// Start an overlapped write
 	ResetEvent(ptrContext->_internal.olWrite.hEvent);
-	res = WriteFile(ptrContext->_internal.deviceHandle, ptrContext->_internal.hidBuffer, length, NULL, &ptrContext->_internal.olWrite);
+	res = WriteFile(ptrContext->_internal.deviceHandle, ptrContext->_internal.hidBuffer, length, &bytes_written, &ptrContext->_internal.olWrite);
 
+	// Check write request started correctly
 	if (!res) {
 		if (GetLastError() != ERROR_IO_PENDING) {
-			/* WriteFile() failed. Return error. */
 			return DS5W_E_IO_FAILED;
 		}
 	}
 
-	/* Wait here until the write is done. This makes
-	   hid_write() synchronous. */
+	// wait/check write ended correctly with infinite wait
 	res = GetOverlappedResult(ptrContext->_internal.deviceHandle, &ptrContext->_internal.olWrite, &bytes_written, TRUE/*wait*/);
 	if (!res) {
-		/* The Write operation failed. */
 		return DS5W_E_IO_FAILED;
 	}
 
@@ -773,30 +777,27 @@ DS5W_ReturnValue DS5W::setOutputReport(DS5W::DeviceContext* ptrContext, size_t l
 DS5W_ReturnValue DS5W::getFeatureReport(DS5W::DeviceContext* ptrContext, size_t length)
 {
 	BOOL res;
-
 	DWORD bytes_returned;
-
 	OVERLAPPED ol;
 	memset(&ol, 0, sizeof(ol));
 
+	// start read request
 	res = DeviceIoControl(ptrContext->_internal.deviceHandle,
 		IOCTL_HID_GET_FEATURE,
 		ptrContext->_internal.hidBuffer, length,
 		ptrContext->_internal.hidBuffer, length,
 		&bytes_returned, &ol);
 
+	// check if read started correctly
 	if (!res) {
 		if (GetLastError() != ERROR_IO_PENDING) {
-			/* DeviceIoControl() failed. Return error. */
 			return DS5W_E_IO_FAILED;
 		}
 	}
 
-	/* Wait here until the write is done. This makes
-	   hid_get_feature_report() synchronous. */
+	// wait/check read ended correctly with infinite wait
 	res = GetOverlappedResult(ptrContext->_internal.deviceHandle, &ol, &bytes_returned, TRUE/*wait*/);
 	if (!res) {
-		/* The operation failed. */
 		return DS5W_E_IO_FAILED;
 	}
 

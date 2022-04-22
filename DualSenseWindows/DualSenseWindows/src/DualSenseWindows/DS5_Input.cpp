@@ -90,7 +90,7 @@ void __DS5W::Input::evaluateHidInputBuffer(unsigned char* hidInBuffer, DS5W::DS5
 	ptrInputState->rightTriggerFeedback = hidInBuffer[0x29];
 
 	unsigned int currentTime = *(unsigned int*)&hidInBuffer[0x1B];
-	unsigned int previousTime = ptrContext->_internal.lastTimestamp;
+	unsigned int previousTime = ptrContext->_internal.timestamp;
 
 	// absolute difference between current and last timestamp
 	unsigned int deltaTime; 
@@ -102,7 +102,7 @@ void __DS5W::Input::evaluateHidInputBuffer(unsigned char* hidInBuffer, DS5W::DS5
 	ptrInputState->currentTime = currentTime;
 	ptrInputState->deltaTime = deltaTime;
 
-	ptrContext->_internal.lastTimestamp = currentTime;
+	ptrContext->_internal.timestamp = currentTime;
 
 	// Battery
 	unsigned char batteryData = hidInBuffer[0x34];

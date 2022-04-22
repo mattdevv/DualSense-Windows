@@ -113,7 +113,14 @@ namespace DS5W {
 			/// </summary>
 			HANDLE deviceHandle;
 
+			/// <summary>
+			/// Synchronization struct for async input
+			/// </summary>
 			OVERLAPPED olRead;
+
+			/// <summary>
+			/// Synchronization struct for async output
+			/// </summary>
 			OVERLAPPED olWrite;
 
 			/// <summary>
@@ -129,7 +136,7 @@ namespace DS5W {
 			/// <summary>
 			/// Time when last input report was received, measured in 0.33 microseconds
 			/// </summary>
-			unsigned int lastTimestamp;
+			unsigned int timestamp;
 
 			/// <summary>
 			/// Current state of connection

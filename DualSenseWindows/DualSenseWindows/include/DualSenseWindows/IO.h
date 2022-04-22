@@ -71,6 +71,12 @@ namespace DS5W {
 	extern "C" DS5W_API void freeDeviceContext(DS5W::DeviceContext* ptrContext);
 
 	/// <summary>
+	/// Free links to HID device in Windows
+	/// </summary>
+	/// <param name="ptrContext"></param>
+	extern "C" DS5W_API void disconnectDevice(DS5W::DeviceContext * ptrContext);
+
+	/// <summary>
 	/// Try to reconnect a removed device
 	/// </summary>
 	/// <param name="ptrContext">Context to reconnect on</param>
@@ -93,10 +99,22 @@ namespace DS5W {
 	/// <returns>Result of call</returns>
 	extern "C" DS5W_API DS5W_ReturnValue setDeviceOutputState(DS5W::DeviceContext* ptrContext, DS5W::DS5OutputState* ptrOutputState);
 
-	void DisconnectController(DS5W::DeviceContext* ptrContext);
+	/// <summary>
+	/// Set all DualSense features to off (rumble, lights, trigger-effects)
+	/// </summary>
+	/// <param name="ptrContext">Pointer to context</param>
+	void disableAllDeviceFeatures(DS5W::DeviceContext* ptrContext);
 
-	DS5W_ReturnValue getCalibrationReport(DS5W::DeviceContext * ptrContext);
+	DS5W_ReturnValue getCalibrationData(DS5W::DeviceContext * ptrContext);
 	DS5W_ReturnValue getInitialTimestamp(DS5W::DeviceContext* ptrContext);
+
+	/// <summary>
+	/// Get input report
+	/// </summary>
+	/// <param name="ptrContext">Pointer to context</param>
+	/// <param name="length">Size of input report</param>
+	/// <param name="milliseconds">Maximum time to wait (0 = infinite)</param>
+	/// <returns>Error code of call</returns>
 	DS5W_ReturnValue getInputReport(DS5W::DeviceContext* ptrContext, size_t length, int milliseconds);
 	DS5W_ReturnValue setOutputReport(DS5W::DeviceContext* ptrContext, size_t length);
 	DS5W_ReturnValue getFeatureReport(DS5W::DeviceContext* ptrContext, size_t length);
