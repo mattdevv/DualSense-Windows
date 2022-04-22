@@ -432,7 +432,7 @@ DS5W_API DS5W_ReturnValue DS5W::initDeviceContext(DS5W::DeviceEnumInfo* ptrEnumI
 
 setupfailed:
 	// Close handle and set error state
-	disconnectDevice(ptrContext);
+	shutdownDevice(ptrContext);
 
 	// Return error
 	return err;
@@ -446,7 +446,7 @@ DS5W_API void DS5W::freeDeviceContext(DS5W::DeviceContext* ptrContext) {
 
 	// Turn off controller first if still connected
 	if (ptrContext->_internal.connected) {
-		disconnectDevice(ptrContext);
+		shutdownDevice(ptrContext);
 	}
 
 	// Free Windows events for I/O
@@ -460,7 +460,7 @@ DS5W_API void DS5W::freeDeviceContext(DS5W::DeviceContext* ptrContext) {
 	ptrContext->_internal.devicePath[0] = 0x0;
 }
 
-DS5W_API void DS5W::disconnectDevice(DS5W::DeviceContext* ptrContext)
+DS5W_API void DS5W::shutdownDevice(DS5W::DeviceContext* ptrContext)
 {
 	// Check pointer
 	if (!ptrContext) {
@@ -474,17 +474,8 @@ DS5W_API void DS5W::disconnectDevice(DS5W::DeviceContext* ptrContext)
 	// Turn off all features to prevent infinite rumble
 	disableAllDeviceFeatures(ptrContext);
 
-	// Prevent further IO calls by marking disconnected
-	ptrContext->_internal.connected = false;
-
-	// Ensure no outstanding IO calls
-	const int maxWait_ms = 50;
-	WaitForSingleObject(ptrContext->_internal.olRead.hEvent, maxWait_ms);
-	WaitForSingleObject(ptrContext->_internal.olRead.hEvent, maxWait_ms);
-
-	// Free in Windows
-	CloseHandle(ptrContext->_internal.deviceHandle);
-	ptrContext->_internal.deviceHandle = NULL;
+	// mark as disconnected
+	disconnectDevice(ptrContext);
 }
 
 DS5W_API DS5W_ReturnValue DS5W::reconnectDevice(DS5W::DeviceContext* ptrContext) {	
@@ -517,7 +508,7 @@ DS5W_API DS5W_ReturnValue DS5W::reconnectDevice(DS5W::DeviceContext* ptrContext)
 	if (!DS5W_SUCCESS(err))
 	{
 		// Close handle and set error state
-		disconnectDevice(ptrContext);
+		shutdownDevice(ptrContext);
 
 		// Return error
 		return err;
@@ -637,6 +628,19 @@ DS5W_API DS5W_ReturnValue DS5W::setDeviceOutputState(DS5W::DeviceContext* ptrCon
 	return DS5W_OK;
 }
 
+void DS5W::disconnectDevice(DS5W::DeviceContext* ptrContext)
+{
+	// Prevent further IO calls by marking disconnected
+	ptrContext->_internal.connected = false;
+
+	// Ensure no outstanding IO calls
+	CancelIo(ptrContext->_internal.deviceHandle);
+
+	// Free in Windows
+	CloseHandle(ptrContext->_internal.deviceHandle);
+	ptrContext->_internal.deviceHandle = NULL;
+}
+
 void DS5W::disableAllDeviceFeatures(DS5W::DeviceContext* ptrContext)
 {
 	DS5W::DS5OutputState os;
@@ -719,8 +723,15 @@ DS5W_ReturnValue DS5W::getInputReport(DS5W::DeviceContext* ptrContext, size_t le
 
 	// check if request started correctly
 	if (!res) {
-		if (GetLastError() != ERROR_IO_PENDING) {
-			return DS5W_E_IO_FAILED;
+		DWORD err = GetLastError();
+		if (err == ERROR_DEVICE_NOT_CONNECTED)
+		{
+			disconnectDevice(ptrContext);
+			return DS5W_E_DEVICE_REMOVED;
+		}
+		// anything but pending or 0 is an error
+		else if (err != ERROR_IO_PENDING) {
+			return DS5W_E_IO_FAILED_START;
 		}
 	}
 	
@@ -738,6 +749,12 @@ DS5W_ReturnValue DS5W::getInputReport(DS5W::DeviceContext* ptrContext, size_t le
 	// wait/check read ended correctly with infinite wait
 	res = GetOverlappedResult(ptrContext->_internal.deviceHandle, &ptrContext->_internal.olRead, &bytes_read, TRUE);
 	if (!res) {
+		DWORD err = GetLastError();
+		if (err == ERROR_DEVICE_NOT_CONNECTED)
+		{
+			disconnectDevice(ptrContext);
+			return DS5W_E_DEVICE_REMOVED;
+		}
 		return DS5W_E_IO_FAILED;
 	}
 
@@ -758,16 +775,29 @@ DS5W_ReturnValue DS5W::setOutputReport(DS5W::DeviceContext* ptrContext, size_t l
 	ResetEvent(ptrContext->_internal.olWrite.hEvent);
 	res = WriteFile(ptrContext->_internal.deviceHandle, ptrContext->_internal.hidBuffer, length, &bytes_written, &ptrContext->_internal.olWrite);
 
-	// Check write request started correctly
+	// check if request started correctly
 	if (!res) {
-		if (GetLastError() != ERROR_IO_PENDING) {
-			return DS5W_E_IO_FAILED;
+		DWORD err = GetLastError();
+		if (err == ERROR_DEVICE_NOT_CONNECTED)
+		{
+			disconnectDevice(ptrContext);
+			return DS5W_E_DEVICE_REMOVED;
+		}
+		// anything but pending or 0 is an error
+		else if (err != ERROR_IO_PENDING) {
+			return DS5W_E_IO_FAILED_START;
 		}
 	}
 
 	// wait/check write ended correctly with infinite wait
 	res = GetOverlappedResult(ptrContext->_internal.deviceHandle, &ptrContext->_internal.olWrite, &bytes_written, TRUE/*wait*/);
 	if (!res) {
+		DWORD err = GetLastError();
+		if (err == ERROR_DEVICE_NOT_CONNECTED)
+		{
+			disconnectDevice(ptrContext);
+			return DS5W_E_DEVICE_REMOVED;
+		}
 		return DS5W_E_IO_FAILED;
 	}
 
@@ -788,16 +818,29 @@ DS5W_ReturnValue DS5W::getFeatureReport(DS5W::DeviceContext* ptrContext, size_t 
 		ptrContext->_internal.hidBuffer, length,
 		&bytes_returned, &ol);
 
-	// check if read started correctly
+	// check if request started correctly
 	if (!res) {
-		if (GetLastError() != ERROR_IO_PENDING) {
-			return DS5W_E_IO_FAILED;
+		DWORD err = GetLastError();
+		if (err == ERROR_DEVICE_NOT_CONNECTED)
+		{
+			disconnectDevice(ptrContext);
+			return DS5W_E_DEVICE_REMOVED;
+		}
+		// anything but pending or 0 is an error
+		else if (err != ERROR_IO_PENDING) {
+			return DS5W_E_IO_FAILED_START;
 		}
 	}
 
 	// wait/check read ended correctly with infinite wait
 	res = GetOverlappedResult(ptrContext->_internal.deviceHandle, &ol, &bytes_returned, TRUE/*wait*/);
 	if (!res) {
+		DWORD err = GetLastError();
+		if (err == ERROR_DEVICE_NOT_CONNECTED)
+		{
+			disconnectDevice(ptrContext);
+			return DS5W_E_DEVICE_REMOVED;
+		}
 		return DS5W_E_IO_FAILED;
 	}
 

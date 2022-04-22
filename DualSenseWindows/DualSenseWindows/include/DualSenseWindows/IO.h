@@ -65,16 +65,18 @@ namespace DS5W {
 	extern "C" DS5W_API DS5W_ReturnValue initDeviceContext(DS5W::DeviceEnumInfo* ptrEnumInfo, DS5W::DeviceContext* ptrContext);
 
 	/// <summary>
-	/// Free the device conntext
+	/// Stop device functions and free all links in Windows
+	/// Device cannot be reconnected with this context
 	/// </summary>
 	/// <param name="ptrContext">Pointer to context</param>
 	extern "C" DS5W_API void freeDeviceContext(DS5W::DeviceContext* ptrContext);
 
 	/// <summary>
-	/// Free links to HID device in Windows
+	/// Stop device functions and free device links in Windows
+	/// Device can be reconnected with this context
 	/// </summary>
 	/// <param name="ptrContext"></param>
-	extern "C" DS5W_API void disconnectDevice(DS5W::DeviceContext * ptrContext);
+	extern "C" DS5W_API void shutdownDevice(DS5W::DeviceContext * ptrContext);
 
 	/// <summary>
 	/// Try to reconnect a removed device
@@ -98,6 +100,12 @@ namespace DS5W {
 	/// <param name="ptrOutputState">Pointer to output state to be set</param>
 	/// <returns>Result of call</returns>
 	extern "C" DS5W_API DS5W_ReturnValue setDeviceOutputState(DS5W::DeviceContext* ptrContext, DS5W::DS5OutputState* ptrOutputState);
+
+	/// <summary>
+	/// Disconnect from windows and mark device as disconnected
+	/// </summary>
+	/// <param name="ptrContext">Device to be disconnected</param>
+	void disconnectDevice(DS5W::DeviceContext* ptrContext);
 
 	/// <summary>
 	/// Set all DualSense features to off (rumble, lights, trigger-effects)

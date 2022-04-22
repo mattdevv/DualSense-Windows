@@ -34,6 +34,7 @@
 #define DS5W_E_BT_COM _DS5W_ReturnValue::E_BT_COM
 #define DS5W_E_IO_TIMEDOUT _DS5W_ReturnValue::E_IO_TIMEOUT
 #define DS5W_E_IO_FAILED _DS5W_ReturnValue::E_IO_FAILED
+#define DS5W_E_IO_FAILED_START _DS5W_ReturnValue::E_IO_FAILED_START
 
 /// <summary>
 /// Enum for return values
@@ -90,8 +91,13 @@ typedef enum class _DS5W_ReturnValue : unsigned int {
 	E_IO_TIMEOUT = 9,
 
 	/// <summary>
-	/// IO fail
+	/// IO failed
 	/// </summary>
 	E_IO_FAILED = 10,
+
+	/// <summary>
+	/// IO failed to start
+	/// </summary>
+	E_IO_FAILED_START = 11
 
 } DS5W_ReturnValue, DS5W_RV;
