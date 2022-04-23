@@ -589,6 +589,7 @@ DS5W_API DS5W_ReturnValue DS5W::setDeviceOutputState(DS5W::DeviceContext* ptrCon
 
 		// build buffer
 		ZeroMemory(ptrContext->_internal.hidOutBuffer, outputReportLength);
+		ptrContext->_internal.hidOutBuffer[0x00] = DS_OUTPUT_REPORT_BT;
 		ptrContext->_internal.hidOutBuffer[0x01] = 0x02;	// magic value?
 		__DS5W::Output::createHidOutputBuffer(&ptrContext->_internal.hidOutBuffer[2], ptrOutputState);
 
