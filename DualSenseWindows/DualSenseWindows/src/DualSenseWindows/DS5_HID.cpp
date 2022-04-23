@@ -71,31 +71,6 @@ DWORD DS5W::AwaitOverlappedTimeout(HANDLE device, OVERLAPPED* ol, int millisecon
 	return 0;
 }
 
-DWORD DS5W::getHIDInputReport(UCHAR reportID, HANDLE device, OVERLAPPED* ol, UCHAR* buffer, size_t length, int milliseconds)
-{
-	// start IO request and check it began correctly
-	DWORD err = getHIDInputReportOverlapped(reportID, device, ol, buffer, length);
-	if (err) return err;
-
-	err = AwaitOverlappedTimeout(device, ol, milliseconds);
-	if (err) return err;
-
-	return 0;
-}
-
-DWORD DS5W::setHIDOutputReport(UCHAR reportID, HANDLE device, OVERLAPPED* ol, UCHAR* buffer, size_t length)
-{
-	// start IO request and check it began correctly
-	DWORD err = setHIDOutputReportOverlapped(reportID, device, ol, buffer, length);
-	if (err) return err;
-
-	// run request synchronously and check there were no errors
-	err = AwaitOverlapped(device, ol);
-	if (err) return err;
-
-	return 0;
-}
-
 DWORD DS5W::getHIDFeatureReport(UCHAR reportID, HANDLE device, OVERLAPPED* ol, UCHAR* buffer, size_t length)
 {
 	buffer[0] = reportID;

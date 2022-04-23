@@ -152,36 +152,60 @@ DS5W_ReturnValue DS5W::getInputReport(DS5W::DeviceContext* ptrContext, UCHAR rep
 {
 	// Get the most recent package
 	// This maybe should be removed? 
-	// average BT waiting times increase by 25% when it is used
+	// It increases average BT waiting time by 25%
 	HidD_FlushQueue(ptrContext->_internal.deviceHandle);
 
-	DWORD err = getHIDInputReport(
-		reportID,
-		ptrContext->_internal.deviceHandle,
-		&ptrContext->_internal.olRead,
-		ptrContext->_internal.hidInBuffer,
-		reportLen,
+	// start an overlapped read
+	DWORD err = getHIDInputReportOverlapped(
+		reportID, ptrContext->_internal.deviceHandle, 
+		&ptrContext->_internal.olRead, 
+		ptrContext->_internal.hidInBuffer, 
+		reportLen);
+
+	// check for errors
+	if (err != 0) {
+		if (err == ERROR_DEVICE_NOT_CONNECTED)	return DS5W_E_DEVICE_REMOVED;
+		else if (err == WAIT_TIMEOUT)			return DS5W_E_IO_TIMEDOUT;
+		else                                    return DS5W_E_IO_FAILED;
+	}
+	
+	// make overlapped call synchronous by waiting here
+	err = AwaitOverlappedTimeout(
+		ptrContext->_internal.deviceHandle, 
+		&ptrContext->_internal.olRead, 
 		waitTime);
 
 	// check for errors
 	if (err != 0) {
 		if (err == ERROR_DEVICE_NOT_CONNECTED)	return DS5W_E_DEVICE_REMOVED;
 		else if (err == WAIT_TIMEOUT)			return DS5W_E_IO_TIMEDOUT;
-		else									return DS5W_E_IO_FAILED;
+		else                                    return DS5W_E_IO_FAILED;
 	}
 
+	// OK
 	return DS5W_OK;
 }
 
 DS5W_ReturnValue DS5W::setOutputReport(DS5W::DeviceContext* ptrContext, UCHAR reportID, USHORT reportLen)
 {
-	// Send output
-	DWORD err = setHIDOutputReport(
+	// start IO request and check it began correctly
+	DWORD err = setHIDOutputReportOverlapped(
 		reportID,
 		ptrContext->_internal.deviceHandle,
 		&ptrContext->_internal.olWrite,
 		ptrContext->_internal.hidOutBuffer,
 		reportLen);
+	
+	// Check for errors
+	if (err != 0) {
+		if (err == ERROR_DEVICE_NOT_CONNECTED)	return DS5W_E_DEVICE_REMOVED;
+		else									return DS5W_E_IO_FAILED;
+	}
+
+	// run request synchronously and check there were no errors
+	err = AwaitOverlapped(
+		ptrContext->_internal.deviceHandle,
+		&ptrContext->_internal.olWrite);
 
 	// Check for errors
 	if (err != 0) {
