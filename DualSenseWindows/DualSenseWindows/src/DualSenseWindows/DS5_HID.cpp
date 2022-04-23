@@ -33,6 +33,7 @@ if (!res) {\
 
 #define CHECK_OVERLAPPED_FINISHED(res) \
 if (!res) {\
+	CancelIoEx(device, ol);\
 	return GetLastError();\
 }\
 
@@ -58,19 +59,8 @@ DWORD DS5W::AwaitOverlappedTimeout(HANDLE device, OVERLAPPED* ol, int millisecon
 	DWORD bytes_passed;
 	BOOL res;
 
-	// wait for input report with timeout (if needed)
-	if (milliseconds > 0) {
-		res = WaitForSingleObject(ol->hEvent, milliseconds);
-		if (res != WAIT_OBJECT_0) {
-			// WaitForSingleObject() timed out with no read
-			// assume it failed and cleanup
-			CancelIoEx(device, ol);
-			return ERROR_TIMEOUT;
-		}
-	}
-
 	// wait/check read ended correctly with infinite wait
-	res = GetOverlappedResult(device, ol, &bytes_passed, TRUE);
+	res = GetOverlappedResultEx(device, ol, &bytes_passed, milliseconds, FALSE);
 	CHECK_OVERLAPPED_FINISHED(res);
 
 	/* bytes_read does not include the first byte which contains the

@@ -151,7 +151,10 @@ DS5W_ReturnValue DS5W::getInitialTimestamp(DS5W::DeviceContext* ptrContext)
 DS5W_ReturnValue DS5W::getInputReport(DS5W::DeviceContext* ptrContext, UCHAR reportID, USHORT reportLen, int waitTime)
 {
 	// Get the most recent package
+	// This maybe should be removed? 
+	// average BT waiting times increase by 25% when it is used
 	HidD_FlushQueue(ptrContext->_internal.deviceHandle);
+
 	DWORD err = getHIDInputReport(
 		reportID,
 		ptrContext->_internal.deviceHandle,
@@ -163,7 +166,7 @@ DS5W_ReturnValue DS5W::getInputReport(DS5W::DeviceContext* ptrContext, UCHAR rep
 	// check for errors
 	if (err != 0) {
 		if (err == ERROR_DEVICE_NOT_CONNECTED)	return DS5W_E_DEVICE_REMOVED;
-		else if (err == ERROR_TIMEOUT)			return DS5W_E_IO_TIMEDOUT;
+		else if (err == WAIT_TIMEOUT)			return DS5W_E_IO_TIMEDOUT;
 		else									return DS5W_E_IO_FAILED;
 	}
 
