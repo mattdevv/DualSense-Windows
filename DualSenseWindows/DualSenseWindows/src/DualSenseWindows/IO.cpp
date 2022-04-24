@@ -12,6 +12,7 @@
 #include <DualSenseWindows/IO.h>
 #include <DualSenseWindows/DS_CRC32.h>
 #include <DualSenseWindows/DS5_Input.h>
+#include <DualSenseWindows/DS5_HID.h>
 #include <DualSenseWindows/DS5_Internal.h>
 #include <DualSenseWindows/DS5_Output.h>
 
@@ -405,8 +406,8 @@ DS5W_API DS5W_ReturnValue DS5W::initDeviceContext(DS5W::DeviceEnumInfo* ptrEnumI
 
 	// Write to context
 	ptrContext->_internal.connected = true;
-	ptrContext->_internal.connectionType = ptrEnumInfo->_internal.connection;
 	ptrContext->_internal.deviceHandle = deviceHandle;
+	ptrContext->_internal.connectionType = ptrEnumInfo->_internal.connection;
 	ptrContext->_internal.uniqueID = ptrEnumInfo->_internal.uniqueID;
 	wcscpy_s(ptrContext->_internal.devicePath, 260, ptrEnumInfo->_internal.path);
 
@@ -530,21 +531,17 @@ DS5W_API DS5W_ReturnValue DS5W::getDeviceInputState(DS5W::DeviceContext* ptrCont
 		return DS5W_E_DEVICE_REMOVED;
 	}
 
-	UCHAR inputReportID;
-	USHORT inputReportLength;
-
-	// get report info
-	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
-		inputReportID = DS_INPUT_REPORT_BT;
-		inputReportLength = DS_INPUT_REPORT_BT_SIZE;
-	}
-	else {
-		inputReportID = DS_INPUT_REPORT_USB;
-		inputReportLength = DS_INPUT_REPORT_USB_SIZE;
-	}
+	DS5W_ReturnValue err;
 
 	// Get device input
-	DS5W_RV err = getInputReport(ptrContext, inputReportID, inputReportLength, IO_TIMEOUT_MILLISECONDS);
+	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
+		ptrContext->_internal.hidInBuffer[0] = DS_INPUT_REPORT_BT;
+		err = getInputReport(ptrContext, DS_INPUT_REPORT_BT_SIZE, IO_TIMEOUT_MILLISECONDS);
+	}
+	else {
+		ptrContext->_internal.hidInBuffer[0] = DS_INPUT_REPORT_USB;
+		err = getInputReport(ptrContext, DS_INPUT_REPORT_USB_SIZE, IO_TIMEOUT_MILLISECONDS);
+	}
 
 	// error check
 	if (!DS5W_SUCCESS(err)) {
@@ -578,40 +575,11 @@ DS5W_API DS5W_ReturnValue DS5W::setDeviceOutputState(DS5W::DeviceContext* ptrCon
 		return DS5W_E_DEVICE_REMOVED;
 	}
 	
-	UCHAR outputReportID;
-	USHORT outputReportLength;
+	// Fill internal buffer with correct HID report for connection type
+	USHORT outputReportLength = createOutputReport(ptrContext, ptrOutputState);
 
-	// Get output report info and build buffer
-	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
-		// report info
-		outputReportID = DS_OUTPUT_REPORT_BT;
-		outputReportLength = DS_OUTPUT_REPORT_BT_SIZE;
-
-		// build buffer
-		ZeroMemory(ptrContext->_internal.hidOutBuffer, outputReportLength);
-		ptrContext->_internal.hidOutBuffer[0x00] = DS_OUTPUT_REPORT_BT;
-		ptrContext->_internal.hidOutBuffer[0x01] = 0x02;	// magic value?
-		__DS5W::Output::createHidOutputBuffer(&ptrContext->_internal.hidOutBuffer[2], ptrOutputState);
-
-		// BT buffer also needs a hash
-		const UINT32 crcChecksum = __DS5W::CRC32::compute(ptrContext->_internal.hidOutBuffer, DS_OUTPUT_REPORT_BT_SIZE - 4);
-		ptrContext->_internal.hidOutBuffer[0x4A] = (unsigned char)((crcChecksum & 0x000000FF) >> 0UL);
-		ptrContext->_internal.hidOutBuffer[0x4B] = (unsigned char)((crcChecksum & 0x0000FF00) >> 8UL);
-		ptrContext->_internal.hidOutBuffer[0x4C] = (unsigned char)((crcChecksum & 0x00FF0000) >> 16UL);
-		ptrContext->_internal.hidOutBuffer[0x4D] = (unsigned char)((crcChecksum & 0xFF000000) >> 24UL);
-	}
-	else {
-		// report info
-		outputReportID = DS_OUTPUT_REPORT_USB;
-		outputReportLength = DS_OUTPUT_REPORT_USB_SIZE;
-
-		// build buffer
-		ZeroMemory(ptrContext->_internal.hidOutBuffer, outputReportLength);
-		__DS5W::Output::createHidOutputBuffer(&ptrContext->_internal.hidOutBuffer[1], ptrOutputState);
-	}
-
-	// Write to controller
-	DS5W_RV err = setOutputReport(ptrContext, outputReportID, outputReportLength);
+	// Send report to controller
+	DS5W_RV err = setOutputReport(ptrContext, outputReportLength);
 
 	// error check
 	if (!DS5W_SUCCESS(err)) {
@@ -622,5 +590,82 @@ DS5W_API DS5W_ReturnValue DS5W::setDeviceOutputState(DS5W::DeviceContext* ptrCon
 	}
 
 	// OK 
+	return DS5W_OK;
+}
+
+DS5W_API DS5W_ReturnValue DS5W::getInputReportAsync(DS5W::DeviceContext* ptrContext)
+{
+	// Check pointer
+	if (!ptrContext) {
+		return DS5W_E_INVALID_ARGS;
+	}
+
+	// Check for connection
+	if (ptrContext->_internal.connected == false) {
+		return DS5W_E_DEVICE_REMOVED;
+	}
+
+	DS5W_ReturnValue err;
+
+	// Get device input
+	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
+		ptrContext->_internal.hidInBuffer[0] = DS_INPUT_REPORT_BT;
+		err = getInputReportOverlapped(ptrContext, DS_INPUT_REPORT_BT_SIZE, IO_TIMEOUT_MILLISECONDS);
+	}
+	else {
+		ptrContext->_internal.hidInBuffer[0] = DS_INPUT_REPORT_USB;
+		err = getInputReportOverlapped(ptrContext, DS_INPUT_REPORT_USB_SIZE, IO_TIMEOUT_MILLISECONDS);
+	}
+
+	// error check
+	if (!DS5W_SUCCESS(err)) {
+		if (err == DS5W_E_DEVICE_REMOVED) {
+			disconnectDevice(ptrContext);
+		}
+		return err;
+	}
+
+	// Return ok
+	return DS5W_OK;
+}
+
+DS5W_API BOOL DS5W::checkIfAsyncInputFinished(DS5W::DeviceContext* ptrContext)
+{
+	return HasOverlappedIoCompleted(&ptrContext->_internal.olRead);
+}
+
+DS5W_API DS5W_ReturnValue DS5W::awaitInputReport(DS5W::DeviceContext* ptrContext, DS5W::DS5InputState* ptrInputState)
+{
+	// Check pointer
+	if (!ptrContext || !ptrInputState) {
+		return DS5W_E_INVALID_ARGS;
+	}
+
+	// Check for connection
+	if (ptrContext->_internal.connected == false) {
+		return DS5W_E_DEVICE_REMOVED;
+	}
+
+	DS5W_ReturnValue err = awaitOverlappedIO(ptrContext, &ptrContext->_internal.olRead, 50);
+
+	// error check
+	if (!DS5W_SUCCESS(err)) {
+		if (err == DS5W_E_DEVICE_REMOVED) {
+			disconnectDevice(ptrContext);
+		}
+		return err;
+	}
+
+	// Evaluete input buffer
+	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
+		// Call bluetooth evaluator if connection is qual to BT
+		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidInBuffer[2], ptrInputState, ptrContext);
+	}
+	else {
+		// Else it is USB so call its evaluator
+		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidInBuffer[1], ptrInputState, ptrContext);
+	}
+
+	// Return ok
 	return DS5W_OK;
 }

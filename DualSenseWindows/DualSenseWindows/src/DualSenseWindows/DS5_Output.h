@@ -26,6 +26,12 @@ namespace __DS5W {
 		void createHidOutputBuffer(unsigned char* hidOutBuffer, DS5W::DS5OutputState* ptrOutputState);
 
 		/// <summary>
+		/// Creates the hid output buffer to disable all features (lights, rumble, etc.)
+		/// </summary>
+		/// <param name="hidOutBuffer">Pointer to start of output report (skipping report id)</param>
+		void createHidOutputBufferDisabled(UCHAR* hidOutBuffer);
+
+		/// <summary>
 		/// Process trigger
 		/// </summary>
 		/// <param name="ptrEffect">Pointer to effect to be applied</param>

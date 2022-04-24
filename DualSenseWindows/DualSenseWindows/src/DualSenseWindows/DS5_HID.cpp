@@ -37,7 +37,7 @@ if (!res) {\
 	return GetLastError();\
 }\
 
-DWORD DS5W::AwaitOverlapped(HANDLE device, OVERLAPPED * ol)
+DWORD DS5W::AwaitOverlapped(HANDLE device, LPOVERLAPPED ol)
 {
 	DWORD bytes_passed;
 	BOOL res;
@@ -54,7 +54,7 @@ DWORD DS5W::AwaitOverlapped(HANDLE device, OVERLAPPED * ol)
 	return 0;
 }
 
-DWORD DS5W::AwaitOverlappedTimeout(HANDLE device, OVERLAPPED* ol, int milliseconds)
+DWORD DS5W::AwaitOverlappedTimeout(HANDLE device, LPOVERLAPPED ol, int milliseconds)
 {
 	DWORD bytes_passed;
 	BOOL res;
@@ -71,10 +71,8 @@ DWORD DS5W::AwaitOverlappedTimeout(HANDLE device, OVERLAPPED* ol, int millisecon
 	return 0;
 }
 
-DWORD DS5W::getHIDFeatureReport(UCHAR reportID, HANDLE device, OVERLAPPED* ol, UCHAR* buffer, size_t length)
+DWORD DS5W::getHIDFeatureReport(HANDLE device, LPOVERLAPPED ol, UCHAR* buffer, size_t length)
 {
-	buffer[0] = reportID;
-
 	BOOL res;
 	DWORD bytes_returned;
 
@@ -96,10 +94,8 @@ DWORD DS5W::getHIDFeatureReport(UCHAR reportID, HANDLE device, OVERLAPPED* ol, U
 	return 0;
 }
 
-DWORD DS5W::getHIDInputReportOverlapped(UCHAR reportID, HANDLE device, OVERLAPPED* ol, UCHAR* buffer, size_t length)
+DWORD DS5W::getHIDInputReportOverlapped(HANDLE device, LPOVERLAPPED ol, UCHAR* buffer, size_t length)
 {
-	buffer[0] = reportID;
-
 	DWORD bytes_read = 0;
 	BOOL res;
 
@@ -113,10 +109,8 @@ DWORD DS5W::getHIDInputReportOverlapped(UCHAR reportID, HANDLE device, OVERLAPPE
 	return 0;
 }
 
-DWORD DS5W::setHIDOutputReportOverlapped(UCHAR reportID, HANDLE device, OVERLAPPED* ol, UCHAR* buffer, size_t length)
+DWORD DS5W::setHIDOutputReportOverlapped(HANDLE device, LPOVERLAPPED ol, UCHAR* buffer, size_t length)
 {
-	buffer[0] = reportID;
-
 	BOOL res;
 
 	// Start an overlapped write

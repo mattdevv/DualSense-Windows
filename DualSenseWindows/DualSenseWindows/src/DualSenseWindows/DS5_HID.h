@@ -38,41 +38,31 @@ namespace DS5W {
 	/// <param name="device">Device performing request</param>
 	/// <param name="ol">Overlapped struct</param>
 	/// <returns>Error code of request</returns>
-	DWORD AwaitOverlapped(HANDLE device, OVERLAPPED* ol);
+	DWORD AwaitOverlapped(HANDLE device, LPOVERLAPPED ol);
 
 	/// <summary>
-	/// Block thread for a period of time until IO request is signalled 
+	/// Block thread until time elapses or IO request is signalled 
 	/// </summary>
 	/// <param name="device">Device performing request</param>
 	/// <param name="ol">Overlapped struct</param>
 	/// <param name="milliseconds">Time to wait</param>
 	/// <returns>Error code of request</returns>
-	DWORD AwaitOverlappedTimeout(HANDLE device, OVERLAPPED* ol, int milliseconds);
-
-	/// <summary>
-	/// fill buffer with HID input report
-	/// </summary>
-	DWORD getHIDInputReport(UCHAR reportID, HANDLE device, OVERLAPPED* ol, UCHAR* buffer, size_t length, int milliseconds);
-
-	/// <summary>
-	/// copy from buffer to device a HID output
-	/// </summary>
-	DWORD setHIDOutputReport(UCHAR reportID, HANDLE device, OVERLAPPED* ol, UCHAR* buffer, size_t length);
+	DWORD AwaitOverlappedTimeout(HANDLE device, LPOVERLAPPED ol, int milliseconds);
 
 	/// <summary>
 	/// fill buffer with HID feature report
 	/// </summary>
-	DWORD getHIDFeatureReport(UCHAR reportID, HANDLE device, OVERLAPPED* ol, UCHAR* buffer, size_t length);
+	DWORD getHIDFeatureReport(HANDLE device, LPOVERLAPPED ol, UCHAR* buffer, size_t length);
 
 	/// <summary>
 	/// Starts a request to read HID input report from device
 	/// </summary>
 	/// <returns>Error code of whether request was started</returns>
-	DWORD getHIDInputReportOverlapped(UCHAR reportID, HANDLE device, OVERLAPPED* ol, UCHAR* buffer, size_t length);
+	DWORD getHIDInputReportOverlapped(HANDLE device, LPOVERLAPPED ol, UCHAR* buffer, size_t length);
 	
 	/// <summary>
 	/// Starts a request to write a HID input report to device
 	/// </summary>
 	/// <returns>Error code of whether request was started</returns>
-	DWORD setHIDOutputReportOverlapped(UCHAR reportID, HANDLE device, OVERLAPPED* ol, UCHAR* buffer, size_t length);
+	DWORD setHIDOutputReportOverlapped(HANDLE device, LPOVERLAPPED ol, UCHAR* buffer, size_t length);
 }

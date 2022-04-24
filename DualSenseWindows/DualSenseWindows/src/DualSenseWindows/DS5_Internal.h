@@ -35,17 +35,12 @@
 namespace DS5W {
 
 	/// <summary>
-	/// Sets an output report to disable all features (lights, rumble, etc.)
-	/// </summary>
-	/// <param name="reportBuffer">Pointer to start of output report (skipping report id)</param>
-	/// <param name="reportLength">Size of output buffer</param>
-	void setOutputStateOff(UCHAR* reportBuffer, USHORT reportLength);
-
-	/// <summary>
 	/// Set all DualSense features to off (rumble, lights, trigger-effects)
 	/// </summary>
 	/// <param name="ptrContext">Pointer to context</param>
 	void disableAllDeviceFeatures(DS5W::DeviceContext* ptrContext);
+
+	int createOutputReport(DS5W::DeviceContext* ptrContext, DS5W::DS5OutputState* ptrOutputState);
 
 	/// <summary>
 	/// Disconnect from windows and mark device as disconnected
@@ -63,6 +58,10 @@ namespace DS5W {
 	/// <param name="length">Size of input report</param>
 	/// <param name="milliseconds">Maximum time to wait (0 = infinite)</param>
 	/// <returns>Error code of call</returns>
-	DS5W_ReturnValue getInputReport(DS5W::DeviceContext* ptrContext, UCHAR reportID, USHORT reportLen, int waitTime);
-	DS5W_ReturnValue setOutputReport(DS5W::DeviceContext* ptrContext, UCHAR reportID, USHORT reportLen);
+	DS5W_ReturnValue getInputReport(DS5W::DeviceContext* ptrContext, USHORT reportLen, int waitTime);
+	DS5W_ReturnValue setOutputReport(DS5W::DeviceContext* ptrContext, USHORT reportLen);
+
+	DS5W_ReturnValue getInputReportOverlapped(DS5W::DeviceContext* ptrContext, USHORT reportLen, int waitTime);
+	DS5W_ReturnValue setOutputReportOverlapped(DS5W::DeviceContext* ptrContext, USHORT reportLen, int waitTime);
+	DS5W_ReturnValue awaitOverlappedIO(DS5W::DeviceContext* ptrContext, LPOVERLAPPED ol, int waitTime);
 }

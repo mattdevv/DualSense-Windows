@@ -45,6 +45,19 @@ void __DS5W::Output::createHidOutputBuffer(unsigned char* hidOutBuffer, DS5W::DS
 	//processTrigger(&ptrOutputState->rightTriggerEffect, &hidOutBuffer[0x0A]);
 }
 
+void __DS5W::Output::createHidOutputBufferDisabled(UCHAR* hidOutBuffer)
+{
+	// Feature flags allow setting all device parameters
+	// Enable flag to disable LEDs
+	hidOutBuffer[0x00] = DS5W::DefaultOutputFlags & 0x00FF;
+	hidOutBuffer[0x01] = ((DS5W::DefaultOutputFlags | (USHORT)DS5W::OutputFlags::DisableAllLED) & 0xFF00) >> 8;
+
+	// set trigger effect to released instead of disabled
+	// this will make them relax instantly
+	hidOutBuffer[0x0A] = (UCHAR)DS5W::TriggerEffectType::ReleaseAll;
+	hidOutBuffer[0x15] = (UCHAR)DS5W::TriggerEffectType::ReleaseAll;
+}
+
 void __DS5W::Output::processTrigger(DS5W::TriggerEffect* ptrEffect, unsigned char* buffer) {
 	// Switch on effect
 	switch (ptrEffect->effectType) {
