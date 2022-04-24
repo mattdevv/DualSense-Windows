@@ -18,37 +18,30 @@ void __DS5W::Input::evaluateHidInputBuffer(unsigned char* hidInBuffer, DS5W::DS5
 
 	// Dpad
 	switch (hidInBuffer[0x07] & 0x0F) {
-		// Up
-	case 0x0:
+		
+	case 0x0: // Up
 		buttonsAndDpad |= DS5W_ISTATE_BTN_DPAD_UP;
 		break;
-		// Down
-	case 0x4:
-		buttonsAndDpad |= DS5W_ISTATE_BTN_DPAD_DOWN;
-		break;
-		// Left
-	case 0x6:
-		buttonsAndDpad |= DS5W_ISTATE_BTN_DPAD_LEFT;
-		break;
-		// Right
-	case 0x2:
+	case 0x2: // Right
 		buttonsAndDpad |= DS5W_ISTATE_BTN_DPAD_RIGHT;
 		break;
-		// Left Down
-	case 0x5:
-		buttonsAndDpad |= DS5W_ISTATE_BTN_DPAD_LEFT | DS5W_ISTATE_BTN_DPAD_DOWN;
+	case 0x4: // Down
+		buttonsAndDpad |= DS5W_ISTATE_BTN_DPAD_DOWN;
 		break;
-		// Left Up
-	case 0x7:
-		buttonsAndDpad |= DS5W_ISTATE_BTN_DPAD_LEFT | DS5W_ISTATE_BTN_DPAD_UP;
+	case 0x6: // Left
+		buttonsAndDpad |= DS5W_ISTATE_BTN_DPAD_LEFT;
 		break;
-		// Right Up
-	case 0x1:
+	case 0x1: // Right Up
 		buttonsAndDpad |= DS5W_ISTATE_BTN_DPAD_RIGHT | DS5W_ISTATE_BTN_DPAD_UP;
 		break;
-		// Right Down
-	case 0x3:
+	case 0x3: // Right Down
 		buttonsAndDpad |= DS5W_ISTATE_BTN_DPAD_RIGHT | DS5W_ISTATE_BTN_DPAD_DOWN;
+		break;
+	case 0x5: // Left Down
+		buttonsAndDpad |= DS5W_ISTATE_BTN_DPAD_LEFT | DS5W_ISTATE_BTN_DPAD_DOWN;
+		break;
+	case 0x7: // Left Up
+		buttonsAndDpad |= DS5W_ISTATE_BTN_DPAD_LEFT | DS5W_ISTATE_BTN_DPAD_UP;
 		break;
 	}
 

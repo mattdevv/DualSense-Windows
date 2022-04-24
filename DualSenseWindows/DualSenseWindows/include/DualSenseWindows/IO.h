@@ -101,10 +101,14 @@ namespace DS5W {
 	/// <returns>Result of call</returns>
 	extern "C" DS5W_API DS5W_ReturnValue setDeviceOutputState(DS5W::DeviceContext* ptrContext, DS5W::DS5OutputState* ptrOutputState);
 
-	extern "C" DS5W_API DS5W_ReturnValue getInputReportAsync(DS5W::DeviceContext* ptrContext);
+	/// <summary>
+	/// Starts an overlapped IO call to get device input report
+	/// </summary>
+	extern "C" DS5W_API DS5W_ReturnValue getInputReportOverlapped(DS5W::DeviceContext* ptrContext);
 
-	extern "C" DS5W_API BOOL checkIfAsyncInputFinished(DS5W::DeviceContext * ptrContext);
-
+	/// <summary>
+	/// Waits until overlapped call finishes, then parses the input buffer into an input state
+	/// </summary>
 	extern "C" DS5W_API DS5W_ReturnValue awaitInputReport(DS5W::DeviceContext* ptrContext, DS5W::DS5InputState* ptrInputState);
 
 }

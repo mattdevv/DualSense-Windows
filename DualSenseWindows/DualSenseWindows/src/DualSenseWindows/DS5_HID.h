@@ -33,7 +33,8 @@
 
 namespace DS5W {
 	/// <summary>
-	/// Block thread indefinitely until IO request is signalled 
+	/// Block thread indefinitely until IO request is signalled
+	/// Will never return if device is removed during function so maybe dont use
 	/// </summary>
 	/// <param name="device">Device performing request</param>
 	/// <param name="ol">Overlapped struct</param>
@@ -50,11 +51,6 @@ namespace DS5W {
 	DWORD AwaitOverlappedTimeout(HANDLE device, LPOVERLAPPED ol, int milliseconds);
 
 	/// <summary>
-	/// fill buffer with HID feature report
-	/// </summary>
-	DWORD getHIDFeatureReport(HANDLE device, LPOVERLAPPED ol, UCHAR* buffer, size_t length);
-
-	/// <summary>
 	/// Starts a request to read HID input report from device
 	/// </summary>
 	/// <returns>Error code of whether request was started</returns>
@@ -65,4 +61,9 @@ namespace DS5W {
 	/// </summary>
 	/// <returns>Error code of whether request was started</returns>
 	DWORD setHIDOutputReportOverlapped(HANDLE device, LPOVERLAPPED ol, UCHAR* buffer, size_t length);
+
+	/// <summary>
+	/// fill buffer with HID feature report
+	/// </summary>
+	DWORD getHIDFeatureReportOverlapped(HANDLE device, LPOVERLAPPED ol, UCHAR* buffer, size_t length);
 }

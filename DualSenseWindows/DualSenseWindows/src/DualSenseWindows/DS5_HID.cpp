@@ -22,16 +22,16 @@
 #include <hidsdi.h>
 
 // check result of starting an overlapped request
-// only allow ERROR_IO_PENDING
-#define CHECK_OVERLAPPED_STARTED(res) \
+// ERROR_IO_PENDING is allowed, just means request did not return automatically
+#define CHECK_ERROR_OL_START(res) \
 if (!res) {\
 	DWORD err = GetLastError();\
 	if (err != ERROR_IO_PENDING) {\
 		return err;\
 	}\
-}
+}\
 
-#define CHECK_OVERLAPPED_FINISHED(res) \
+#define CHECK_ERROR_OL_FINISHED(res) \
 if (!res) {\
 	CancelIoEx(device, ol);\
 	return GetLastError();\
@@ -44,7 +44,7 @@ DWORD DS5W::AwaitOverlapped(HANDLE device, LPOVERLAPPED ol)
 
 	// wait/check read ended correctly with infinite wait
 	res = GetOverlappedResult(device, ol, &bytes_passed, TRUE);
-	CHECK_OVERLAPPED_FINISHED(res);
+	CHECK_ERROR_OL_FINISHED(res);
 
 	/* bytes_read does not include the first byte which contains the
 	   report ID. The data buffer actually contains one more byte than
@@ -61,35 +61,12 @@ DWORD DS5W::AwaitOverlappedTimeout(HANDLE device, LPOVERLAPPED ol, int milliseco
 
 	// wait/check read ended correctly with infinite wait
 	res = GetOverlappedResultEx(device, ol, &bytes_passed, milliseconds, FALSE);
-	CHECK_OVERLAPPED_FINISHED(res);
+	CHECK_ERROR_OL_FINISHED(res);
 
 	/* bytes_read does not include the first byte which contains the
 	   report ID. The data buffer actually contains one more byte than
 	   bytes_read. */
 	bytes_passed++;
-
-	return 0;
-}
-
-DWORD DS5W::getHIDFeatureReport(HANDLE device, LPOVERLAPPED ol, UCHAR* buffer, size_t length)
-{
-	BOOL res;
-	DWORD bytes_returned;
-
-	// start read request
-	ResetEvent(ol->hEvent);
-	res = DeviceIoControl(device,
-		IOCTL_HID_GET_FEATURE,
-		buffer, length,
-		buffer, length,
-		&bytes_returned, ol);
-
-	// check if request started correctly
-	CHECK_OVERLAPPED_STARTED(res);
-
-	// run request synchronously and check there were no errors
-	DWORD err = AwaitOverlapped(device, ol);
-	if (err) return err;
 
 	return 0;
 }
@@ -104,7 +81,7 @@ DWORD DS5W::getHIDInputReportOverlapped(HANDLE device, LPOVERLAPPED ol, UCHAR* b
 	res = ReadFile(device, buffer, length, NULL, ol);
 
 	// check if request started correctly
-	CHECK_OVERLAPPED_STARTED(res);
+	CHECK_ERROR_OL_START(res);
 
 	return 0;
 }
@@ -118,7 +95,26 @@ DWORD DS5W::setHIDOutputReportOverlapped(HANDLE device, LPOVERLAPPED ol, UCHAR* 
 	res = WriteFile(device, buffer, length, NULL, ol);
 
 	// check if request started correctly
-	CHECK_OVERLAPPED_STARTED(res);
+	CHECK_ERROR_OL_START(res);
+
+	return 0;
+}
+
+DWORD DS5W::getHIDFeatureReportOverlapped(HANDLE device, LPOVERLAPPED ol, UCHAR* buffer, size_t length)
+{
+	BOOL res;
+	DWORD bytes_returned;
+
+	// start read request
+	ResetEvent(ol->hEvent);
+	res = DeviceIoControl(device,
+		IOCTL_HID_GET_FEATURE,
+		buffer, length,
+		buffer, length,
+		&bytes_returned, ol);
+
+	// check if request started correctly
+	CHECK_ERROR_OL_START(res);
 
 	return 0;
 }

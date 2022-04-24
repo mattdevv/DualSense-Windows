@@ -26,44 +26,33 @@
 #include <SetupAPI.h>
 #include <hidsdi.h>
 
-void DS5W::disableAllDeviceFeatures(DS5W::DeviceContext* ptrContext)
+#define CHECK_FOR_IO_ERROR(err) \
+if (err != 0) {\
+	if		(err == WAIT_TIMEOUT)					return DS5W_E_IO_TIMEDOUT;\
+	else if (err == ERROR_DEVICE_NOT_CONNECTED)		return DS5W_E_DEVICE_REMOVED;\
+	else if (err == ERROR_NOT_FOUND)				return DS5W_E_IO_NOT_FOUND;\
+	else											return DS5W_E_IO_FAILED;\
+}\
+
+DS5W_ReturnValue DS5W::disableAllDeviceFeatures(DS5W::DeviceContext* ptrContext)
 {
 	// Get output report length and build buffer
-	USHORT outputReportLength;
-	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
-
-		outputReportLength = DS_OUTPUT_REPORT_BT_SIZE;
-
-		// fill buffer with off state
-		ZeroMemory(ptrContext->_internal.hidOutBuffer, DS_OUTPUT_REPORT_BT_SIZE);
-		ptrContext->_internal.hidOutBuffer[0x00] = DS_OUTPUT_REPORT_BT;
-		ptrContext->_internal.hidOutBuffer[0x01] = 0x02;	// magic value?
-		__DS5W::Output::createHidOutputBufferDisabled(&ptrContext->_internal.hidOutBuffer[2]);
-
-		// Set hash
-		const UINT32 crcChecksum = __DS5W::CRC32::compute(ptrContext->_internal.hidOutBuffer, DS_OUTPUT_REPORT_BT_SIZE - 4);
-		ptrContext->_internal.hidOutBuffer[0x4A] = (unsigned char)((crcChecksum & 0x000000FF) >> 0UL);
-		ptrContext->_internal.hidOutBuffer[0x4B] = (unsigned char)((crcChecksum & 0x0000FF00) >> 8UL);
-		ptrContext->_internal.hidOutBuffer[0x4C] = (unsigned char)((crcChecksum & 0x00FF0000) >> 16UL);
-		ptrContext->_internal.hidOutBuffer[0x4D] = (unsigned char)((crcChecksum & 0xFF000000) >> 24UL);
-	}
-	else {
-
-		outputReportLength = DS_OUTPUT_REPORT_USB_SIZE;
-		
-		// fill buffer with off state
-		ZeroMemory(ptrContext->_internal.hidOutBuffer, DS_OUTPUT_REPORT_USB_SIZE);
-		ptrContext->_internal.hidOutBuffer[0x00] = DS_OUTPUT_REPORT_USB;
-		__DS5W::Output::createHidOutputBufferDisabled(&ptrContext->_internal.hidOutBuffer[1]);
-	}
+	int outputReportLength;
+	__DS5W::Output::createHIDOutputReportDisabled(ptrContext, &outputReportLength);
 
 	// Write to controller
-	DS5W_RV err = setOutputReport(ptrContext, outputReportLength);
+	DS5W_RV err = setOutputReport(ptrContext, outputReportLength, IO_TIMEOUT_MILLISECONDS);
+
+	if (!DS5W_SUCCESS(err))
+		return err;
+
+	return DS5W_OK;
 }
 
 void DS5W::disconnectDevice(DS5W::DeviceContext* ptrContext)
 {
-	// Prevent further IO calls by marking disconnected
+	// Prevent further API IO calls by marking disconnected
+	// internal IO calls are still allowed
 	ptrContext->_internal.connected = false;
 
 	// Ensure no outstanding IO calls
@@ -74,53 +63,27 @@ void DS5W::disconnectDevice(DS5W::DeviceContext* ptrContext)
 	ptrContext->_internal.deviceHandle = NULL;
 }
 
-int DS5W::createOutputReport(DS5W::DeviceContext* ptrContext, DS5W::DS5OutputState* ptrOutputState)
-{
-	// Convert output state to device's expected form
-	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
-
-		// BT needs the first byte to be the report ID
-		ZeroMemory(ptrContext->_internal.hidOutBuffer, DS_OUTPUT_REPORT_BT_SIZE);
-		ptrContext->_internal.hidOutBuffer[0x00] = DS_OUTPUT_REPORT_BT;
-		ptrContext->_internal.hidOutBuffer[0x01] = 0x02;	// magic value?
-		__DS5W::Output::createHidOutputBuffer(&ptrContext->_internal.hidOutBuffer[2], ptrOutputState);
-
-		// BT buffer also needs last 4 bytes to be hash of buffer
-		const UINT32 crcChecksum = __DS5W::CRC32::compute(ptrContext->_internal.hidOutBuffer, DS_OUTPUT_REPORT_BT_SIZE - 4);
-		ptrContext->_internal.hidOutBuffer[0x4A] = (unsigned char)((crcChecksum & 0x000000FF) >> 0UL);
-		ptrContext->_internal.hidOutBuffer[0x4B] = (unsigned char)((crcChecksum & 0x0000FF00) >> 8UL);
-		ptrContext->_internal.hidOutBuffer[0x4C] = (unsigned char)((crcChecksum & 0x00FF0000) >> 16UL);
-		ptrContext->_internal.hidOutBuffer[0x4D] = (unsigned char)((crcChecksum & 0xFF000000) >> 24UL);
-	
-		return DS_OUTPUT_REPORT_BT_SIZE;
-	}
-	else {
-		// USB needs the first byte set as the report ID
-		ZeroMemory(ptrContext->_internal.hidOutBuffer, DS_OUTPUT_REPORT_USB_SIZE);
-		ptrContext->_internal.hidOutBuffer[0x00] = DS_OUTPUT_REPORT_USB;
-		__DS5W::Output::createHidOutputBuffer(&ptrContext->_internal.hidOutBuffer[1], ptrOutputState);
-
-		return DS_OUTPUT_REPORT_USB_SIZE;
-	}
-}
-
 DS5W_ReturnValue DS5W::getCalibrationData(DS5W::DeviceContext* ptrContext)
 {
+	// Make request for report
 	ptrContext->_internal.hidInBuffer[0] = DS_FEATURE_REPORT_CALIBRATION;
-	DWORD err = getHIDFeatureReport(
+	DWORD err = getHIDFeatureReportOverlapped(
 		ptrContext->_internal.deviceHandle,
 		&ptrContext->_internal.olRead,
 		ptrContext->_internal.hidInBuffer,
 		DS_FEATURE_REPORT_CALIBRATION_SIZE
 	);
 
-	if (err != 0)
-	{
-		if (err == ERROR_DEVICE_NOT_CONNECTED)	
-			return DS5W_E_DEVICE_REMOVED;
-		else									
-			return DS5W_E_IO_FAILED;
-	}
+	CHECK_FOR_IO_ERROR(err);
+
+	// make overlapped call synchronous by waiting here
+	const int waitTime = 1000; // milliseconds
+	err = AwaitOverlappedTimeout(
+		ptrContext->_internal.deviceHandle,
+		&ptrContext->_internal.olRead,
+		waitTime);
+
+	CHECK_FOR_IO_ERROR(err);
 
 	// use calibration data to calculate constant values
 	__DS5W::Input::parseCalibrationData(&ptrContext->_internal.calibrationData, (short*)(&ptrContext->_internal.hidInBuffer[1]));
@@ -130,38 +93,34 @@ DS5W_ReturnValue DS5W::getCalibrationData(DS5W::DeviceContext* ptrContext)
 
 DS5W_ReturnValue DS5W::getInitialTimestamp(DS5W::DeviceContext* ptrContext)
 {
-	UCHAR inputReportID;
-	USHORT inputReportLength;
-
-	// get report info
+	// Get a device input report to read the current time
+	DS5W_RV err;
+	const int waitTime = 500; // milliseconds
 	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
-		inputReportID = DS_INPUT_REPORT_BT;
-		inputReportLength = DS_INPUT_REPORT_BT_SIZE;
+		ptrContext->_internal.hidInBuffer[0] = DS_INPUT_REPORT_BT;
+		err = getInputReport(ptrContext, DS_INPUT_REPORT_BT_SIZE, waitTime);
 	}
 	else {
-		inputReportID = DS_INPUT_REPORT_USB;
-		inputReportLength = DS_INPUT_REPORT_USB_SIZE;
+		ptrContext->_internal.hidInBuffer[0] = DS_INPUT_REPORT_USB;
+		err = getInputReport(ptrContext, DS_INPUT_REPORT_USB_SIZE, waitTime);
 	}
 
-	// Get device input
-	const int ONE_SECOND = 1000;
-	DS5W_RV err = getInputReport(ptrContext, inputReportLength, ONE_SECOND);
+	// check report was successfully read
 	if (!DS5W_SUCCESS(err)) {
-		// Return error
 		return err;
 	}
 
 	// Evaluete input buffer
+	int currentTime;
 	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
-		// timestamp is offset by 2 bytes if using bluetooth
-		ptrContext->_internal.timestamp = *(unsigned int*)&ptrContext->_internal.hidInBuffer[2 + 0x1B];
+		currentTime = *(unsigned int*)&ptrContext->_internal.hidInBuffer[0x1B + 2]; // BT buffer is offset by 2
 	}
 	else {
-		// timestamp is offset by 1 byte if using usb
-		ptrContext->_internal.timestamp = *(unsigned int*)&ptrContext->_internal.hidInBuffer[1 + 0x1B];
+		currentTime = *(unsigned int*)&ptrContext->_internal.hidInBuffer[0x1B + 1]; // USB buffer is offset by 1
 	}
+	ptrContext->_internal.timestamp = currentTime;
 
-	// Return ok
+	// OK
 	return DS5W_OK;
 }
 
@@ -179,12 +138,7 @@ DS5W_ReturnValue DS5W::getInputReport(DS5W::DeviceContext* ptrContext, USHORT re
 		ptrContext->_internal.hidInBuffer, 
 		reportLen);
 
-	// check for errors
-	if (err != 0) {
-		if (err == ERROR_DEVICE_NOT_CONNECTED)	return DS5W_E_DEVICE_REMOVED;
-		else if (err == WAIT_TIMEOUT)			return DS5W_E_IO_TIMEDOUT;
-		else                                    return DS5W_E_IO_FAILED;
-	}
+	CHECK_FOR_IO_ERROR(err);
 	
 	// make overlapped call synchronous by waiting here
 	err = AwaitOverlappedTimeout(
@@ -192,18 +146,13 @@ DS5W_ReturnValue DS5W::getInputReport(DS5W::DeviceContext* ptrContext, USHORT re
 		&ptrContext->_internal.olRead, 
 		waitTime);
 
-	// check for errors
-	if (err != 0) {
-		if (err == ERROR_DEVICE_NOT_CONNECTED)	return DS5W_E_DEVICE_REMOVED;
-		else if (err == WAIT_TIMEOUT)			return DS5W_E_IO_TIMEDOUT;
-		else                                    return DS5W_E_IO_FAILED;
-	}
+	CHECK_FOR_IO_ERROR(err);
 
 	// OK
 	return DS5W_OK;
 }
 
-DS5W_ReturnValue DS5W::setOutputReport(DS5W::DeviceContext* ptrContext, USHORT reportLen)
+DS5W_ReturnValue DS5W::setOutputReport(DS5W::DeviceContext* ptrContext, USHORT reportLen, int waitTime)
 {
 	// start IO request and check it began correctly
 	DWORD err = setHIDOutputReportOverlapped(
@@ -212,27 +161,20 @@ DS5W_ReturnValue DS5W::setOutputReport(DS5W::DeviceContext* ptrContext, USHORT r
 		ptrContext->_internal.hidOutBuffer,
 		reportLen);
 	
-	// Check for errors
-	if (err != 0) {
-		if (err == ERROR_DEVICE_NOT_CONNECTED)	return DS5W_E_DEVICE_REMOVED;
-		else									return DS5W_E_IO_FAILED;
-	}
+	CHECK_FOR_IO_ERROR(err);
 
 	// run request synchronously and check there were no errors
-	err = AwaitOverlapped(
+	err = AwaitOverlappedTimeout(
 		ptrContext->_internal.deviceHandle,
-		&ptrContext->_internal.olWrite);
+		&ptrContext->_internal.olWrite,
+		waitTime);
 
-	// Check for errors
-	if (err != 0) {
-		if (err == ERROR_DEVICE_NOT_CONNECTED)	return DS5W_E_DEVICE_REMOVED;
-		else									return DS5W_E_IO_FAILED;
-	}
+	CHECK_FOR_IO_ERROR(err);
 
 	return DS5W_OK;
 }
 
-DS5W_ReturnValue DS5W::getInputReportOverlapped(DS5W::DeviceContext* ptrContext, USHORT reportLen, int waitTime)
+DS5W_ReturnValue DS5W::getInputReportOverlapped(DS5W::DeviceContext* ptrContext, USHORT reportLen)
 {
 	// Get the most recent package
 	// This maybe should be removed? 
@@ -246,17 +188,13 @@ DS5W_ReturnValue DS5W::getInputReportOverlapped(DS5W::DeviceContext* ptrContext,
 		ptrContext->_internal.hidInBuffer,
 		reportLen);
 
-	// check for errors
-	if (err != 0) {
-		if (err == ERROR_DEVICE_NOT_CONNECTED)	return DS5W_E_DEVICE_REMOVED;
-		else                                    return DS5W_E_IO_FAILED;
-	}
+	CHECK_FOR_IO_ERROR(err);
 
 	// OK
 	return DS5W_OK;
 }
 
-DS5W_ReturnValue DS5W::setOutputReportOverlapped(DS5W::DeviceContext* ptrContext, USHORT reportLen, int waitTime)
+DS5W_ReturnValue DS5W::setOutputReportOverlapped(DS5W::DeviceContext* ptrContext, USHORT reportLen)
 {
 	// start IO request and check it began correctly
 	DWORD err = setHIDOutputReportOverlapped(
@@ -265,11 +203,7 @@ DS5W_ReturnValue DS5W::setOutputReportOverlapped(DS5W::DeviceContext* ptrContext
 		ptrContext->_internal.hidOutBuffer,
 		reportLen);
 
-	// Check for errors
-	if (err != 0) {
-		if (err == ERROR_DEVICE_NOT_CONNECTED)	return DS5W_E_DEVICE_REMOVED;
-		else									return DS5W_E_IO_FAILED;
-	}
+	CHECK_FOR_IO_ERROR(err);
 
 	return DS5W_OK;
 }
@@ -282,12 +216,7 @@ DS5W_ReturnValue DS5W::awaitOverlappedIO(DS5W::DeviceContext* ptrContext, LPOVER
 		&ptrContext->_internal.olRead,
 		waitTime);
 
-	// check for errors
-	if (err != 0) {
-		if (err == ERROR_DEVICE_NOT_CONNECTED)	return DS5W_E_DEVICE_REMOVED;
-		else if (err == WAIT_TIMEOUT)			return DS5W_E_IO_TIMEDOUT;
-		else                                    return DS5W_E_IO_FAILED;
-	}
+	CHECK_FOR_IO_ERROR(err);
 
 	// OK
 	return DS5W_OK;

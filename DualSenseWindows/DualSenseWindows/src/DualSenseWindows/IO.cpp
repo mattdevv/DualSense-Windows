@@ -454,9 +454,6 @@ DS5W_API void DS5W::freeDeviceContext(DS5W::DeviceContext* ptrContext) {
 	// Free Windows events for I/O
 	CloseHandle(ptrContext->_internal.olRead.hEvent);
 	CloseHandle(ptrContext->_internal.olWrite.hEvent);
-	
-	// Unset bool
-	ptrContext->_internal.connected = false;
 
 	// Unset string
 	ptrContext->_internal.devicePath[0] = 0x0;
@@ -473,7 +470,11 @@ DS5W_API void DS5W::shutdownDevice(DS5W::DeviceContext* ptrContext)
 	if (ptrContext->_internal.connected == false)
 		return;
 
-	// Turn off all features to prevent infinite rumble
+	// Prevent further API IO calls by marking disconnected
+	// internal IO calls are still allowed
+	ptrContext->_internal.connected = false;
+
+	// Internal IO call turns off all features to prevent infinite rumble
 	disableAllDeviceFeatures(ptrContext);
 
 	// mark as disconnected
@@ -576,10 +577,11 @@ DS5W_API DS5W_ReturnValue DS5W::setDeviceOutputState(DS5W::DeviceContext* ptrCon
 	}
 	
 	// Fill internal buffer with correct HID report for connection type
-	USHORT outputReportLength = createOutputReport(ptrContext, ptrOutputState);
+	int outputReportLength;
+	__DS5W::Output::createHIDOutputReport(ptrContext, ptrOutputState, &outputReportLength);
 
 	// Send report to controller
-	DS5W_RV err = setOutputReport(ptrContext, outputReportLength);
+	DS5W_RV err = setOutputReport(ptrContext, outputReportLength, IO_TIMEOUT_MILLISECONDS);
 
 	// error check
 	if (!DS5W_SUCCESS(err)) {
@@ -593,7 +595,7 @@ DS5W_API DS5W_ReturnValue DS5W::setDeviceOutputState(DS5W::DeviceContext* ptrCon
 	return DS5W_OK;
 }
 
-DS5W_API DS5W_ReturnValue DS5W::getInputReportAsync(DS5W::DeviceContext* ptrContext)
+DS5W_API DS5W_ReturnValue DS5W::getInputReportOverlapped(DS5W::DeviceContext* ptrContext)
 {
 	// Check pointer
 	if (!ptrContext) {
@@ -610,11 +612,11 @@ DS5W_API DS5W_ReturnValue DS5W::getInputReportAsync(DS5W::DeviceContext* ptrCont
 	// Get device input
 	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
 		ptrContext->_internal.hidInBuffer[0] = DS_INPUT_REPORT_BT;
-		err = getInputReportOverlapped(ptrContext, DS_INPUT_REPORT_BT_SIZE, IO_TIMEOUT_MILLISECONDS);
+		err = getInputReportOverlapped(ptrContext, DS_INPUT_REPORT_BT_SIZE);
 	}
 	else {
 		ptrContext->_internal.hidInBuffer[0] = DS_INPUT_REPORT_USB;
-		err = getInputReportOverlapped(ptrContext, DS_INPUT_REPORT_USB_SIZE, IO_TIMEOUT_MILLISECONDS);
+		err = getInputReportOverlapped(ptrContext, DS_INPUT_REPORT_USB_SIZE);
 	}
 
 	// error check
@@ -629,11 +631,6 @@ DS5W_API DS5W_ReturnValue DS5W::getInputReportAsync(DS5W::DeviceContext* ptrCont
 	return DS5W_OK;
 }
 
-DS5W_API BOOL DS5W::checkIfAsyncInputFinished(DS5W::DeviceContext* ptrContext)
-{
-	return HasOverlappedIoCompleted(&ptrContext->_internal.olRead);
-}
-
 DS5W_API DS5W_ReturnValue DS5W::awaitInputReport(DS5W::DeviceContext* ptrContext, DS5W::DS5InputState* ptrInputState)
 {
 	// Check pointer
@@ -646,7 +643,8 @@ DS5W_API DS5W_ReturnValue DS5W::awaitInputReport(DS5W::DeviceContext* ptrContext
 		return DS5W_E_DEVICE_REMOVED;
 	}
 
-	DS5W_ReturnValue err = awaitOverlappedIO(ptrContext, &ptrContext->_internal.olRead, 50);
+	// block thread here until request is fulfilled or timeout
+	DS5W_ReturnValue err = awaitOverlappedIO(ptrContext, &ptrContext->_internal.olRead, IO_TIMEOUT_MILLISECONDS);
 
 	// error check
 	if (!DS5W_SUCCESS(err)) {
@@ -658,11 +656,11 @@ DS5W_API DS5W_ReturnValue DS5W::awaitInputReport(DS5W::DeviceContext* ptrContext
 
 	// Evaluete input buffer
 	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
-		// Call bluetooth evaluator if connection is qual to BT
+		// bluetooth HID report is offset by 2
 		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidInBuffer[2], ptrInputState, ptrContext);
 	}
 	else {
-		// Else it is USB so call its evaluator
+		// usb HID report is offset by 1
 		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidInBuffer[1], ptrInputState, ptrContext);
 	}
 

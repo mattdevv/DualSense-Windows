@@ -13,6 +13,7 @@
 #include <DualSenseWindows/DSW_Api.h>
 #include <DualSenseWindows/Device.h>
 #include <DualSenseWindows/DS5State.h>
+#include <DualSenseWindows/DS_CRC32.h>
 
 #include <Windows.h>
 
@@ -30,6 +31,22 @@ namespace __DS5W {
 		/// </summary>
 		/// <param name="hidOutBuffer">Pointer to start of output report (skipping report id)</param>
 		void createHidOutputBufferDisabled(UCHAR* hidOutBuffer);
+
+		/// <summary>
+		/// Fills the context's output buffer with the HID report form of an output state
+		/// </summary>
+		/// <param name="ptrContext"></param>
+		/// <param name="ptrOutputState"></param>
+		/// <returns></returns>
+		void createHIDOutputReport(DS5W::DeviceContext* ptrContext, DS5W::DS5OutputState* ptrOutputState, int* lengthOut);
+
+		/// <summary>
+		/// Fills the context's output buffer with an output state that disables all features (lights, rumble, etc.)
+		/// </summary>
+		/// <param name="ptrContext"></param>
+		/// <param name="ptrOutputState"></param>
+		/// <returns></returns>
+		void createHIDOutputReportDisabled(DS5W::DeviceContext* ptrContext, int* lengthOut);
 
 		/// <summary>
 		/// Process trigger
