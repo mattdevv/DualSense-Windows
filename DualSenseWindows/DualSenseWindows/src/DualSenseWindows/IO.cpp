@@ -631,10 +631,10 @@ DS5W_API DS5W_ReturnValue DS5W::getInputReportOverlapped(DS5W::DeviceContext* pt
 	return DS5W_OK;
 }
 
-DS5W_API DS5W_ReturnValue DS5W::awaitInputReport(DS5W::DeviceContext* ptrContext, DS5W::DS5InputState* ptrInputState)
+DS5W_API DS5W_ReturnValue DS5W::awaitInputReport(DS5W::DeviceContext* ptrContext)
 {
 	// Check pointer
-	if (!ptrContext || !ptrInputState) {
+	if (!ptrContext) {
 		return DS5W_E_INVALID_ARGS;
 	}
 
@@ -654,6 +654,17 @@ DS5W_API DS5W_ReturnValue DS5W::awaitInputReport(DS5W::DeviceContext* ptrContext
 		return err;
 	}
 
+	// Return ok
+	return DS5W_OK;
+}
+
+DS5W_API void DS5W::getHeldInputReport(DS5W::DeviceContext* ptrContext, DS5W::DS5InputState* ptrInputState)
+{
+	// Check pointer
+	if (!ptrContext || !ptrInputState || !ptrContext->_internal.connected) {
+		return;
+	}
+
 	// Evaluete input buffer
 	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
 		// bluetooth HID report is offset by 2
@@ -663,7 +674,4 @@ DS5W_API DS5W_ReturnValue DS5W::awaitInputReport(DS5W::DeviceContext* ptrContext
 		// usb HID report is offset by 1
 		__DS5W::Input::evaluateHidInputBuffer(&ptrContext->_internal.hidInBuffer[1], ptrInputState, ptrContext);
 	}
-
-	// Return ok
-	return DS5W_OK;
 }
