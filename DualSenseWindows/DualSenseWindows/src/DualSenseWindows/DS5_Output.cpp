@@ -59,7 +59,7 @@ void __DS5W::Output::createHidOutputBufferDisabled(UCHAR* hidOutBuffer)
 	hidOutBuffer[0x15] = (UCHAR)DS5W::TriggerEffectType::ReleaseAll;
 }
 
-void __DS5W::Output::createHIDOutputReport(DS5W::DeviceContext* ptrContext, DS5W::DS5OutputState* ptrOutputState, int* lengthOut)
+int __DS5W::Output::createHIDOutputReport(DS5W::DeviceContext* ptrContext, DS5W::DS5OutputState* ptrOutputState)
 {
 	// Convert output state to device's expected form
 	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
@@ -70,14 +70,11 @@ void __DS5W::Output::createHIDOutputReport(DS5W::DeviceContext* ptrContext, DS5W
 		ptrContext->_internal.hidOutBuffer[0x01] = 0x02;	// magic value?
 		__DS5W::Output::createHidOutputBuffer(&ptrContext->_internal.hidOutBuffer[2], ptrOutputState);
 
-		// BT buffer also needs last 4 bytes to be hash of buffer
-		const UINT32 crcChecksum = __DS5W::CRC32::compute(ptrContext->_internal.hidOutBuffer, DS_OUTPUT_REPORT_BT_SIZE - 4);
-		ptrContext->_internal.hidOutBuffer[0x4A] = (unsigned char)((crcChecksum & 0x000000FF) >> 0UL);
-		ptrContext->_internal.hidOutBuffer[0x4B] = (unsigned char)((crcChecksum & 0x0000FF00) >> 8UL);
-		ptrContext->_internal.hidOutBuffer[0x4C] = (unsigned char)((crcChecksum & 0x00FF0000) >> 16UL);
-		ptrContext->_internal.hidOutBuffer[0x4D] = (unsigned char)((crcChecksum & 0xFF000000) >> 24UL);
+		// BT buffer also needs to set last 4 bytes to be the hash of all bytes (minus last 4)
+		UINT32 hash = __DS5W::CRC32::compute(ptrContext->_internal.hidOutBuffer, DS_OUTPUT_REPORT_BT_SIZE - sizeof(UINT32));
+		memcpy(&ptrContext->_internal.hidOutBuffer[DS_OUTPUT_REPORT_BT_SIZE - sizeof(UINT32)], &hash, sizeof(UINT32));
 
-		*lengthOut = DS_OUTPUT_REPORT_BT_SIZE;
+		return DS_OUTPUT_REPORT_BT_SIZE;
 	}
 	else {
 		// USB needs the first byte set as the report ID
@@ -85,11 +82,11 @@ void __DS5W::Output::createHIDOutputReport(DS5W::DeviceContext* ptrContext, DS5W
 		ptrContext->_internal.hidOutBuffer[0x00] = DS_OUTPUT_REPORT_USB;
 		__DS5W::Output::createHidOutputBuffer(&ptrContext->_internal.hidOutBuffer[1], ptrOutputState);
 
-		*lengthOut = DS_OUTPUT_REPORT_USB_SIZE;
+		return DS_OUTPUT_REPORT_USB_SIZE;
 	}
 }
 
-void __DS5W::Output::createHIDOutputReportDisabled(DS5W::DeviceContext* ptrContext, int* lengthOut)
+int __DS5W::Output::createHIDOutputReportDisabled(DS5W::DeviceContext* ptrContext)
 {
 	// Convert output state to device's expected form
 	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
@@ -100,14 +97,11 @@ void __DS5W::Output::createHIDOutputReportDisabled(DS5W::DeviceContext* ptrConte
 		ptrContext->_internal.hidOutBuffer[0x01] = 0x02;	// magic value?
 		__DS5W::Output::createHidOutputBufferDisabled(&ptrContext->_internal.hidOutBuffer[2]);
 
-		// BT buffer also needs last 4 bytes to be hash of buffer
-		const UINT32 crcChecksum = __DS5W::CRC32::compute(ptrContext->_internal.hidOutBuffer, DS_OUTPUT_REPORT_BT_SIZE - 4);
-		ptrContext->_internal.hidOutBuffer[0x4A] = (unsigned char)((crcChecksum & 0x000000FF) >> 0UL);
-		ptrContext->_internal.hidOutBuffer[0x4B] = (unsigned char)((crcChecksum & 0x0000FF00) >> 8UL);
-		ptrContext->_internal.hidOutBuffer[0x4C] = (unsigned char)((crcChecksum & 0x00FF0000) >> 16UL);
-		ptrContext->_internal.hidOutBuffer[0x4D] = (unsigned char)((crcChecksum & 0xFF000000) >> 24UL);
+		// BT buffer also needs to set last 4 bytes to be the hash of all bytes (minus last 4)
+		UINT32 hash = __DS5W::CRC32::compute(ptrContext->_internal.hidOutBuffer, DS_OUTPUT_REPORT_BT_SIZE - sizeof(UINT32));
+		memcpy(&ptrContext->_internal.hidOutBuffer[DS_OUTPUT_REPORT_BT_SIZE - sizeof(UINT32)], &hash, sizeof(UINT32));
 
-		*lengthOut = DS_OUTPUT_REPORT_BT_SIZE;
+		return DS_OUTPUT_REPORT_BT_SIZE;
 	}
 	else {
 		// USB needs the first byte set as the report ID
@@ -115,7 +109,7 @@ void __DS5W::Output::createHIDOutputReportDisabled(DS5W::DeviceContext* ptrConte
 		ptrContext->_internal.hidOutBuffer[0x00] = DS_OUTPUT_REPORT_USB;
 		__DS5W::Output::createHidOutputBufferDisabled(&ptrContext->_internal.hidOutBuffer[1]);
 
-		*lengthOut = DS_OUTPUT_REPORT_USB_SIZE;
+		return DS_OUTPUT_REPORT_USB_SIZE;
 	}
 }
 

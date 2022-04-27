@@ -37,8 +37,7 @@ if (err != 0) {\
 DS5W_ReturnValue DS5W::disableAllDeviceFeatures(DS5W::DeviceContext* ptrContext)
 {
 	// Get output report length and build buffer
-	int outputReportLength;
-	__DS5W::Output::createHIDOutputReportDisabled(ptrContext, &outputReportLength);
+	int outputReportLength = __DS5W::Output::createHIDOutputReportDisabled(ptrContext);
 
 	// Write to controller
 	DS5W_RV err = setOutputReport(ptrContext, outputReportLength, IO_TIMEOUT_MILLISECONDS);

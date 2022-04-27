@@ -38,7 +38,7 @@ namespace __DS5W {
 		/// <param name="ptrContext"></param>
 		/// <param name="ptrOutputState"></param>
 		/// <returns></returns>
-		void createHIDOutputReport(DS5W::DeviceContext* ptrContext, DS5W::DS5OutputState* ptrOutputState, int* lengthOut);
+		int createHIDOutputReport(DS5W::DeviceContext* ptrContext, DS5W::DS5OutputState* ptrOutputState);
 
 		/// <summary>
 		/// Fills the context's output buffer with an output state that disables all features (lights, rumble, etc.)
@@ -46,7 +46,7 @@ namespace __DS5W {
 		/// <param name="ptrContext"></param>
 		/// <param name="ptrOutputState"></param>
 		/// <returns></returns>
-		void createHIDOutputReportDisabled(DS5W::DeviceContext* ptrContext, int* lengthOut);
+		int createHIDOutputReportDisabled(DS5W::DeviceContext* ptrContext);
 
 		/// <summary>
 		/// Process trigger

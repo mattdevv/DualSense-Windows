@@ -37,6 +37,37 @@ if (!res) {\
 	return GetLastError();\
 }\
 
+bool DS5W::CheckDeviceAttributes(HANDLE device, USHORT vendorID, USHORT productID)
+{
+	HIDD_ATTRIBUTES deviceAttributes;
+
+	if (HidD_GetAttributes(device, &deviceAttributes)) {
+		if (deviceAttributes.VendorID == vendorID && deviceAttributes.ProductID == productID) {
+			return true;
+		}
+	}
+
+	return 0;
+}
+
+USHORT DS5W::GetDeviceInputReportSize(HANDLE device)
+{
+	USHORT size = 0;
+
+	PHIDP_PREPARSED_DATA ppd;
+	if (HidD_GetPreparsedData(device, &ppd)) {
+		// Get device capabilitys
+		HIDP_CAPS deviceCaps;
+		if (HidP_GetCaps(ppd, &deviceCaps) == HIDP_STATUS_SUCCESS) {
+			size = deviceCaps.InputReportByteLength;
+		}
+		// Free preparsed data
+		HidD_FreePreparsedData(ppd);
+	}
+
+	return size;
+}
+
 DWORD DS5W::AwaitOverlapped(HANDLE device, LPOVERLAPPED ol)
 {
 	DWORD bytes_passed;
@@ -73,7 +104,6 @@ DWORD DS5W::AwaitOverlappedTimeout(HANDLE device, LPOVERLAPPED ol, int milliseco
 
 DWORD DS5W::getHIDInputReportOverlapped(HANDLE device, LPOVERLAPPED ol, UCHAR* buffer, size_t length)
 {
-	DWORD bytes_read = 0;
 	BOOL res;
 
 	// Start an Overlapped I/O read

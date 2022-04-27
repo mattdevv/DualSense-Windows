@@ -33,6 +33,22 @@
 
 namespace DS5W {
 	/// <summary>
+	/// Checks that the device has correct IDs
+	/// </summary>
+	/// <param name="device">Handle of device</param>
+	/// <param name="vendorID">Desired vendor</param>
+	/// <param name="productID">Desired product</param>
+	/// <returns></returns>
+	bool CheckDeviceAttributes(HANDLE device, USHORT vendorID, USHORT productID);
+
+	/// <summary>
+	/// Returns the device's input report size
+	/// </summary>
+	/// <param name="device"></param>
+	/// <returns></returns>
+	USHORT GetDeviceInputReportSize(HANDLE device);
+
+	/// <summary>
 	/// Block thread indefinitely until IO request is signalled
 	/// Will never return if device is removed during function so maybe dont use
 	/// </summary>
