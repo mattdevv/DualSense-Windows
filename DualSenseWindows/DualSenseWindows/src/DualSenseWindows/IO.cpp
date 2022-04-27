@@ -526,7 +526,7 @@ DS5W_API DS5W_ReturnValue DS5W::setDeviceOutputState(DS5W::DeviceContext* ptrCon
 	return DS5W_OK;
 }
 
-DS5W_API DS5W_ReturnValue DS5W::getInputReportOverlapped(DS5W::DeviceContext* ptrContext)
+DS5W_API DS5W_ReturnValue DS5W::startInputRequest(DS5W::DeviceContext* ptrContext)
 {
 	// Check pointer
 	if (!ptrContext) {
@@ -543,11 +543,11 @@ DS5W_API DS5W_ReturnValue DS5W::getInputReportOverlapped(DS5W::DeviceContext* pt
 	// Start request for device input
 	if (ptrContext->_internal.connectionType == DS5W::DeviceConnection::BT) {
 		ptrContext->_internal.hidInBuffer[0] = DS_INPUT_REPORT_BT;
-		err = getInputReportOverlapped(ptrContext, DS_INPUT_REPORT_BT_SIZE);
+		err = startInputRequest(ptrContext, DS_INPUT_REPORT_BT_SIZE);
 	}
 	else {
 		ptrContext->_internal.hidInBuffer[0] = DS_INPUT_REPORT_USB;
-		err = getInputReportOverlapped(ptrContext, DS_INPUT_REPORT_USB_SIZE);
+		err = startInputRequest(ptrContext, DS_INPUT_REPORT_USB_SIZE);
 	}
 
 	// error check
@@ -562,7 +562,7 @@ DS5W_API DS5W_ReturnValue DS5W::getInputReportOverlapped(DS5W::DeviceContext* pt
 	return DS5W_OK;
 }
 
-DS5W_API DS5W_ReturnValue DS5W::awaitInputReport(DS5W::DeviceContext* ptrContext)
+DS5W_API DS5W_ReturnValue DS5W::awaitInputRequest(DS5W::DeviceContext* ptrContext)
 {
 	// Check pointer
 	if (!ptrContext) {
@@ -575,7 +575,7 @@ DS5W_API DS5W_ReturnValue DS5W::awaitInputReport(DS5W::DeviceContext* ptrContext
 	}
 
 	// block thread here until request is fulfilled or timeout
-	DS5W_ReturnValue err = awaitOverlappedIO(ptrContext, &ptrContext->_internal.olRead, IO_TIMEOUT_MILLISECONDS);
+	DS5W_ReturnValue err = awaitIORequest(ptrContext, &ptrContext->_internal.olRead, IO_TIMEOUT_MILLISECONDS);
 
 	// error check
 	if (!DS5W_SUCCESS(err)) {
@@ -589,7 +589,7 @@ DS5W_API DS5W_ReturnValue DS5W::awaitInputReport(DS5W::DeviceContext* ptrContext
 	return DS5W_OK;
 }
 
-DS5W_API void DS5W::getHeldInputReport(DS5W::DeviceContext* ptrContext, DS5W::DS5InputState* ptrInputState)
+DS5W_API void DS5W::getHeldInputState(DS5W::DeviceContext* ptrContext, DS5W::DS5InputState* ptrInputState)
 {
 	// Check pointer
 	if (!ptrContext || !ptrInputState) {

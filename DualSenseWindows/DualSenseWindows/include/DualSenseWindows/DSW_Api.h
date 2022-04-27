@@ -35,6 +35,7 @@
 #define DS5W_E_IO_TIMEDOUT _DS5W_ReturnValue::E_IO_TIMEDOUT
 #define DS5W_E_IO_FAILED _DS5W_ReturnValue::E_IO_FAILED
 #define DS5W_E_IO_NOT_FOUND _DS5W_ReturnValue::E_IO_NOT_FOUND
+#define DS5W_E_IO_PENDING _DS5W_ReturnValue::E_IO_PENDING
 
 /// <summary>
 /// Enum for return values
@@ -95,6 +96,11 @@ typedef enum class _DS5W_ReturnValue : unsigned int {
 	/// </summary>
 	E_IO_FAILED = 10,
 
-	E_IO_NOT_FOUND = 11
+	E_IO_NOT_FOUND = 11,
+
+	/// <summary>
+	/// IO did not complete because it is running in the background
+	/// </summary>
+	E_IO_PENDING = 12
 
 } DS5W_ReturnValue, DS5W_RV;

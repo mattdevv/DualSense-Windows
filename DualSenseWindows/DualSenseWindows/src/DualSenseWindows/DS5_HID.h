@@ -70,16 +70,16 @@ namespace DS5W {
 	/// Starts a request to read HID input report from device
 	/// </summary>
 	/// <returns>Error code of whether request was started</returns>
-	DWORD getHIDInputReportOverlapped(HANDLE device, LPOVERLAPPED ol, UCHAR* buffer, size_t length);
+	DWORD getHIDInputReport(HANDLE device, LPOVERLAPPED ol, UCHAR* buffer, size_t length);
 	
 	/// <summary>
 	/// Starts a request to write a HID input report to device
 	/// </summary>
 	/// <returns>Error code of whether request was started</returns>
-	DWORD setHIDOutputReportOverlapped(HANDLE device, LPOVERLAPPED ol, UCHAR* buffer, size_t length);
+	DWORD setHIDOutputReport(HANDLE device, LPOVERLAPPED ol, UCHAR* buffer, size_t length);
 
 	/// <summary>
 	/// fill buffer with HID feature report
 	/// </summary>
-	DWORD getHIDFeatureReportOverlapped(HANDLE device, LPOVERLAPPED ol, UCHAR* buffer, size_t length);
+	DWORD getHIDFeatureReport(HANDLE device, LPOVERLAPPED ol, UCHAR* buffer, size_t length);
 }

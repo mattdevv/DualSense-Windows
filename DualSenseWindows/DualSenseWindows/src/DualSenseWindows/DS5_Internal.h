@@ -33,6 +33,10 @@
 #include <DualSenseWindows/DeviceSpecs.h>
 
 namespace DS5W {
+	/// <summary>
+	/// Tries to convert windows error codes into DS5W errors
+	/// </summary>
+	DS5W_ReturnValue convertSystemErrorCode(DWORD err);
 
 	/// <summary>
 	/// Set all DualSense features to off (rumble, lights, trigger-effects)
@@ -59,7 +63,7 @@ namespace DS5W {
 	DS5W_ReturnValue getInputReport(DS5W::DeviceContext* ptrContext, USHORT reportLen, int waitTime);
 	DS5W_ReturnValue setOutputReport(DS5W::DeviceContext* ptrContext, USHORT reportLen, int waitTime);
 
-	DS5W_ReturnValue getInputReportOverlapped(DS5W::DeviceContext* ptrContext, USHORT reportLen);
-	DS5W_ReturnValue setOutputReportOverlapped(DS5W::DeviceContext* ptrContext, USHORT reportLen);
-	DS5W_ReturnValue awaitOverlappedIO(DS5W::DeviceContext* ptrContext, LPOVERLAPPED ol, int waitTime);
+	DS5W_ReturnValue startInputRequest(DS5W::DeviceContext* ptrContext, USHORT reportLen);
+	DS5W_ReturnValue startOutputRequest(DS5W::DeviceContext* ptrContext, USHORT reportLen);
+	DS5W_ReturnValue awaitIORequest(DS5W::DeviceContext* ptrContext, LPOVERLAPPED ol, int waitTime);
 }
