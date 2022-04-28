@@ -1,11 +1,16 @@
 MIT License
 
 ----------------------------------- Info -----------------------------------
+This project is a fork of the "DualSense Windows API" project by Ludwig 
+Füchsl. As such portions of the project are held by the original copyright
+Ludwig Füchsl (2020).
+
 Only the implementation is licensed under the MIT license. The protocol of the 
 DualSense 5 controller has been discovered independently and collectively by
 several people. You can find my sources in the GitHub repository.
 ----------------------------------------------------------------------------
 
+Copyright (c) 2022 Matthew Hall
 Copyright (c) 2020 Ludwig Füchsl
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

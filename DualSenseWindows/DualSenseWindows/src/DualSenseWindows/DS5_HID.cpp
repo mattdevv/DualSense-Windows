@@ -1,6 +1,6 @@
 /*
-	IO.cpp is part of DualSenseWindows
-	https://github.com/Ohjurot/DualSense-Windows
+	DS5_HID.cpp is part of DualSenseWindows
+	https://github.com/mattdevv/DualSense-Windows
 
 	Contributors of this file:
 	04.2022 Matthew Hall
@@ -20,16 +20,6 @@
 #include <Hidclass.h>
 #include <SetupAPI.h>
 #include <hidsdi.h>
-
-// check result of starting an overlapped request
-// ERROR_IO_PENDING is allowed, just means request did not return automatically
-#define CHECK_ERROR_OL_START(res) \
-if (!res) {\
-	DWORD err = GetLastError();\
-	if (err != ERROR_IO_PENDING) {\
-		return err;\
-	}\
-}\
 
 bool DS5W::CheckDeviceAttributes(HANDLE device, USHORT vendorID, USHORT productID)
 {

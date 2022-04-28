@@ -1,6 +1,6 @@
 /*
-	IO.cpp is part of DualSenseWindows
-	https://github.com/Ohjurot/DualSense-Windows
+	DS5_Internal.cpp is part of DualSenseWindows
+	https://github.com/mattdevv/DualSense-Windows
 
 	Contributors of this file:
 	04.2022 Matthew Hall

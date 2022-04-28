@@ -1,6 +1,6 @@
 /*
 	DS5Specs.h is part of DualSenseWindows
-	https://github.com/Ohjurot/DualSense-Windows
+	https://github.com/mattdevv/DualSense-Windows
 
 	Contributors of this file:
 	11.2021 Matthew Hall

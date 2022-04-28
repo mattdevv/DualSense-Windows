@@ -1,10 +1,10 @@
 /*
 	Device.h is part of DualSenseWindows
-	https://github.com/Ohjurot/DualSense-Windows
+	https://github.com/mattdevv/DualSense-Windows
 
 	Contributors of this file:
-	11.2020 Ludwig Füchsl
 	11.2021 Matthew Hall
+	11.2020 Ludwig Füchsl
 
 	Licensed under the MIT License (To be found in repository root directory)
 */

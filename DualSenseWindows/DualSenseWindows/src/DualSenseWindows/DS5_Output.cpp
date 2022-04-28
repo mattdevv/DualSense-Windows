@@ -1,6 +1,5 @@
 #include "DS5_Output.h"
 
-
 void __DS5W::Output::createHidOutputBuffer(unsigned char* hidOutBuffer, DS5W::DS5OutputState* ptrOutputState) {
 
 	// Feature flags 
