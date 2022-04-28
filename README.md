@@ -98,11 +98,13 @@ I have partially used the following sources to implement the functionality:
 - The original repo by Ohjurot
 - The GitHub community on this project and https://github.com/Ryochan7/DS4Windows/issues/1545
 - https://www.reddit.com/r/gamedev/comments/jumvi5/dualsense_haptics_leds_and_more_hid_output_report/
+- https://gist.github.com/stealth-alex/10a8e7cc6027b78fa18a7f48a0d3d1e4
 - https://gist.github.com/dogtopus/894da226d73afb3bdd195df41b3a26aa
 - https://gist.github.com/Ryochan7/ef8fabae34c0d8b30e2ab057f3e6e039
 - https://gist.github.com/Ryochan7/91a9759deb5dff3096fc5afd50ba19e2
 - https://github.com/torvalds/linux/blob/master/drivers/hid/hid-sony.c
 - https://elixir.bootlin.com/linux/latest/source/drivers/hid/hid-playstation.c
+- https://controllers.fandom.com/wiki/Sony_DualSense#FFB_Trigger_Effect_Factories
 
 
 

@@ -20,22 +20,25 @@
 #define DS5W_API __declspec(dllimport)
 #endif
 
+#define IO_TIMEOUT_MILLISECONDS	100 /* How long to wait for IO requests before assuming device disconnect */
+#define ID_HASH_SEED 0xAABB /* Seed used when hashing device path */
+
 #define DS5W_SUCCESS(expr) ((expr) == _DS5W_ReturnValue::OK)
 #define DS5W_FAILED(expr) ((expr) != _DS5W_ReturnValue::OK)
 
-#define DS5W_OK _DS5W_ReturnValue::OK
-#define DS5W_E_UNKNOWN _DS5W_ReturnValue::E_UNKNOWN
-#define DS5W_E_INSUFFICIENT_BUFFER _DS5W_ReturnValue::E_INSUFFICIENT_BUFFER
-#define DS5W_E_EXTERNAL_WINAPI _DS5W_ReturnValue::E_EXTERNAL_WINAPI
-#define DS5W_E_STACK_OVERFLOW _DS5W_ReturnValue::E_STACK_OVERFLOW
-#define DS5W_E_INVALID_ARGS _DS5W_ReturnValue::E_INVALID_ARGS
-#define DS5W_E_CURRENTLY_NOT_SUPPORTED _DS5W_ReturnValue::E_CURRENTLY_NOT_SUPPORTED
-#define DS5W_E_DEVICE_REMOVED _DS5W_ReturnValue::E_DEVICE_REMOVED
-#define DS5W_E_BT_COM _DS5W_ReturnValue::E_BT_COM
-#define DS5W_E_IO_TIMEDOUT _DS5W_ReturnValue::E_IO_TIMEDOUT
-#define DS5W_E_IO_FAILED _DS5W_ReturnValue::E_IO_FAILED
-#define DS5W_E_IO_NOT_FOUND _DS5W_ReturnValue::E_IO_NOT_FOUND
-#define DS5W_E_IO_PENDING _DS5W_ReturnValue::E_IO_PENDING
+#define DS5W_OK							_DS5W_ReturnValue::OK
+#define DS5W_E_UNKNOWN					_DS5W_ReturnValue::E_UNKNOWN
+#define DS5W_E_INSUFFICIENT_BUFFER		_DS5W_ReturnValue::E_INSUFFICIENT_BUFFER
+#define DS5W_E_EXTERNAL_WINAPI			_DS5W_ReturnValue::E_EXTERNAL_WINAPI
+#define DS5W_E_STACK_OVERFLOW			_DS5W_ReturnValue::E_STACK_OVERFLOW
+#define DS5W_E_INVALID_ARGS				_DS5W_ReturnValue::E_INVALID_ARGS
+#define DS5W_E_CURRENTLY_NOT_SUPPORTED	_DS5W_ReturnValue::E_CURRENTLY_NOT_SUPPORTED
+#define DS5W_E_DEVICE_REMOVED			_DS5W_ReturnValue::E_DEVICE_REMOVED
+#define DS5W_E_BT_COM					_DS5W_ReturnValue::E_BT_COM
+#define DS5W_E_IO_TIMEDOUT				_DS5W_ReturnValue::E_IO_TIMEDOUT
+#define DS5W_E_IO_FAILED				_DS5W_ReturnValue::E_IO_FAILED
+#define DS5W_E_IO_NOT_FOUND				_DS5W_ReturnValue::E_IO_NOT_FOUND
+#define DS5W_E_IO_PENDING				_DS5W_ReturnValue::E_IO_PENDING
 
 /// <summary>
 /// Enum for return values
