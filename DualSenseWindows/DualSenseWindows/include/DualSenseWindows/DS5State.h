@@ -87,12 +87,12 @@ namespace DS5W {
 	/// </summary>
 	typedef struct _Touch {
 		/// <summary>
-		/// X positon of finger (~ 0 - 2000)
+		/// X positon of finger (0 - 1920)
 		/// </summary>
 		unsigned int x;
 
 		/// <summary>
-		/// Y position of finger (~ 0 - 2048)
+		/// Y position of finger (0 - 1080)
 		/// </summary>
 		unsigned int y;
 
@@ -159,7 +159,7 @@ namespace DS5W {
 		ContinuousResitance = 0x01,
 
 		/// <summary>
-		/// Seciton resistance is appleyed
+		/// Seciton resistance is applied
 		/// </summary>
 		SectionResitance = 0x02,
 

@@ -99,6 +99,9 @@ typedef enum class _DS5W_ReturnValue : unsigned int {
 	/// </summary>
 	E_IO_FAILED = 10,
 
+	/// <summary>
+	/// Overlapped IO request was not found
+	/// </summary>
 	E_IO_NOT_FOUND = 11,
 
 	/// <summary>
