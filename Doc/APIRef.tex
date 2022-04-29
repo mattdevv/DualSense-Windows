@@ -29,38 +29,47 @@
 	\mbox{}
 }
 
-\paragraph{Error codes}
+\paragraph{Error names + codes}
 \mbox{}\\
 
 % DS5W_OK
-\tblx{DS5W\_OK}{The operation completed without an error}
+\tblx{DS5W\_OK 0}{The operation completed without an error }
 
 % DS5W_E_UNKNOWN
-\tblx{DS5W\_E\_UNKNOWN}{An unknown error occurred}
+\tblx{DS5W\_E\_UNKNOWN 1}{An unknown error occurred }
 
 % DS5W_E_INSUFFICIENT_BUFFER
-\tblx{DS5W\_E\_INSUFFICIENT\_BUFFER}{The user supplied buffer is to small }
+\tblx{DS5W\_E\_INSUFFICIENT\_BUFFER 2}{The user supplied buffer is to small }
 
 % DS5W_E_EXTERNAL_WINAPI
-\tblx{DS5W\_E\_EXTERNAL\_WINAPI}{An unsuspected Windows sided error occurred}
+\tblx{DS5W\_E\_EXTERNAL\_WINAPI 3}{An unsuspected Windows sided error occurred}
+
+% DS5W_E_STACK_OVERFLOW
+\tblx{DS5W\_E\_STACK\_OVERFLOW 4}{The API tried to allocate memory on the stack but failed}
 
 % DS5W_E_INVALID_ARGS
-\tblx{DS5W\_E\_INVALID\_ARGS}{The user supplied arguments are invalid}
+\tblx{DS5W\_E\_INVALID\_ARGS 5}{The user supplied arguments are invalid}
 
 % DS5W_E_CURRENTLY_NOT_SUPPORTED
-\tblx{DS5W\_E\_CURRENTLY\_NOT\_SUPPORTED}{This feature is currently not supported}
+\tblx{DS5W\_E\_CURRENTLY\_NOT\_SUPPORTED 6}{This feature is currently not supported}
 
 % DS5W_E_DEVICE_REMOVED
-\tblx{DS5W\_E\_DEVICE\_REMOVED}{The device was removed unexpectedly}
+\tblx{DS5W\_E\_DEVICE\_REMOVED 7}{The device is not connected either physically or digitally}
 
 % DS5W_E_BT_COM
-\tblx{DS5W\_E\_BT\_COM}{Bluetooth communication error}
+\tblx{DS5W\_E\_BT\_COM 8}{Bluetooth communication error}
 
 % DS5W_E_IO_TIMEOUT
-\tblx{DS5W\_E\_IO\_TIMEOUT}{Windows IO operation did not complete in time}
+\tblx{DS5W\_E\_IO\_TIMEOUT 9}{Windows IO operation was cancelled due to taking too long}
 
 % DS5W_E_IO_FAILED
-\tblx{DS5W\_E\_IO\_FAILED}{Windows IO operation failed}
+\tblx{DS5W\_E\_IO\_FAILED  10}{Windows IO operation failed}
+
+% DS5W_E_IO_NOT_FOUND
+\tblx{DS5W\_E\_IO\_NOT\_FOUND  11}{Windows IO operation was missing}
+
+% DS5W_E_IO_PENDING
+\tblx{DS5W\_E\_IO\_PENDING  12}{Windows IO operation did not complete but is running in background}
 
 
 
@@ -78,32 +87,30 @@
 \paragraph{I/O State helpers}
 \mbox{}\\
 
-% DS5W_ISTATE_BTX_SQUARE / CROSS / CIRCLE / TRIANGLE
-\tblx{DS5W\_ISTATE\_BTX\_SQUARE}{PlayStation Square button}
-\tblx{DS5W\_ISTATE\_BTX\_CROSS}{PlayStation Cross button}
-\tblx{DS5W\_ISTATE\_BTX\_CIRCLE}{PlayStation Circle button}
-\tblx{DS5W\_ISTATE\_BTX\_TRIANGLE}{PlayStation Triangle button}
+% SQUARE / CROSS / CIRCLE / TRIANGLE
+\tblx{DS5W\_ISTATE\_BTN\_SQUARE}{PlayStation Square button}
+\tblx{DS5W\_ISTATE\_BTN\_CROSS}{PlayStation Cross button}
+\tblx{DS5W\_ISTATE\_BTN\_CIRCLE}{PlayStation Circle button}
+\tblx{DS5W\_ISTATE\_BTN\_TRIANGLE}{PlayStation Triangle button}
 
 % DPAD
-\tblx{DS5W\_ISTATE\_DPAD\_LEFT}{D-Pad left}
-\tblx{DS5W\_ISTATE\_DPAD\_DOWN}{D-Pad down}
-\tblx{DS5W\_ISTATE\_DPAD\_RIGHT}{D-Pad right}
-\tblx{DS5W\_ISTATE\_DPAD\_UP}{D-Pad up}
+\tblx{DS5W\_ISTATE\_BTN\_DPAD\_LEFT}{D-Pad left}
+\tblx{DS5W\_ISTATE\_BTN\_DPAD\_DOWN}{D-Pad down}
+\tblx{DS5W\_ISTATE\_BTN\_DPAD\_RIGHT}{D-Pad right}
+\tblx{DS5W\_ISTATE\_BTN\_DPAD\_UP}{D-Pad up}
 
-% Button A
-\tblx{DS5W\_ISTATE\_BTN\_A\_LEFT\_BUMPER}{Left bumper button}
-\tblx{DS5W\_ISTATE\_BTN\_A\_RIGHT\_BUMPER}{Right bumper button}
-\tblx{DS5W\_ISTATE\_BTN\_A\_LEFT\_TRIGGER}{Left trigger binary input}
-\tblx{DS5W\_ISTATE\_BTN\_A\_RIGHT\_TRIGGER}{Right trigger binary input}
-\tblx{DS5W\_ISTATE\_BTN\_A\_SELECT}{Select / Share button}
-\tblx{DS5W\_ISTATE\_BTN\_A\_MENU}{Menu Button}
-\tblx{DS5W\_ISTATE\_BTN\_A\_LEFT\_STICK}{Left stick push button}
-\tblx{DS5W\_ISTATE\_BTN\_A\_RIGHT\_STICK}{Right stick push button}
-
-% Button B
-\tblx{DS5W\_ISTATE\_BTN\_B\_PLAYSTATION\_LOGO}{PlayStation logo button}
-\tblx{DS5W\_ISTATE\_BTN\_B\_PAD\_BUTTON}{The touch-pads integrated button}
-\tblx{DS5W\_ISTATE\_BTN\_B\_MIC\_BUTTON}{Microphone mute button}
+% Other Buttons
+\tblx{DS5W\_ISTATE\_BTN\_BUMPER\_LEFT}{Left bumper button}
+\tblx{DS5W\_ISTATE\_BTN\_BUMPER\_RIGHT}{Right bumper button}
+\tblx{DS5W\_ISTATE\_BTN\_TRIGGER\_LEFT}{Left trigger binary input}
+\tblx{DS5W\_ISTATE\_BTN\_TRIGGER\_RIGHT}{Right trigger binary input}
+\tblx{DS5W\_ISTATE\_BTN\_SELECT}{Select / Share button}
+\tblx{DS5W\_ISTATE\_BTN\_MENU}{Menu Button}
+\tblx{DS5W\_ISTATE\_BTN\_STICK\_LEFT}{Left stick push button}
+\tblx{DS5W\_ISTATE\_BTN\_STICK\_RIGHT}{Right stick push button}
+\tblx{DS5W\_ISTATE\_BTN\_PLAYSTATION\_LOGO}{PlayStation logo button}
+\tblx{DS5W\_ISTATE\_BTN\_PAD\_BUTTON}{The touch-pads integrated button}
+\tblx{DS5W\_ISTATE\_BTN\_MIC\_BUTTON}{Microphone mute button}
 
 % Outstate
 \tblx{DS5W\_OSTATE\_PLAYER\_LED\_LEFT}{Left player indicator LED bit-mask}
@@ -149,10 +156,23 @@
 
 \tbly{int8\_t}{y}{Y Position of the finger (top to bottom).} \\
 
-\label{APIRef_Types_micled}
-\paragraph{MicLed} Enum class representation the state of the microphone LED. \\
+\tbly{bool}{down}{Whether a finger is touching the touchpad} \\
 
-\tblx{OFF}{Microphone LED is completely off.}
+\tbly{uint8\_t}{id}{7-Bit id of last touch (resets after 127). Counter is shared by each touch point and is not unique. } \\
+
+\label{APIRef_Types_battery}
+\paragraph{Battery} This struct contains information about the battery level. (work in progress)\\
+
+\tbly{bool}{charging}{Whether the device is currently charging.} \\
+
+\tbly{boolt}{fullyCharged}{Whether the battery is full} \\
+
+\tbly{uint8\_t}{level}{current battery level  (0-100)} \\
+
+\label{APIRef_Types_micled}
+\paragraph{MicLed} Enum class representation the state of the orange microphone LED. \\
+
+\tblx{OFF}{Microphone LED is off.}
 \tblx{ON}{Microphone LED is on.}
 \tblx{PULSE}{Microphone LED is pulsing.}
 
@@ -164,11 +184,12 @@
 \tblx{ContinuousResitance}{Adaptive trigger will provide a continuous resistance from a specific starting point.}
 \tblx{SectionResitance}{Adaptive trigger will provide a force fixed resistance on a defined section.}
 \tblx{EffectEx}{Adaptive trigger will execute an extended effect.}
+\tblx{ReleaseAll}{Adaptive trigger will disable and release any active effects immediately.}
 \tblx{Calibrate}{Adaptive trigger will enter an fixed function calibration program. Still experimental use only!}
 
 \label{APIRef_Types_trigfx}
 \paragraph{TriggerEffect}
-This struct represents an adaptive trigger effect. The first param is the type. The other is a union over structs for each type.\\
+This struct represents an adaptive trigger effect. The struct is 11 bytes long with the first byte being the effect type and the remaining being parameters. Not all parameters are used in trigger effects.\\
 
 \tbly{\hyperref[APIRef_Types_tfxt]{TriggerEffectType}}{effectType}{Type of the effect. Chose next data according to this parameter.}\\
 
@@ -222,25 +243,21 @@ When \texttt{effectType} == \texttt{EffectEx}:\\
 
 
 \paragraph{DS5InputState} 
-This struct represents the input state of a DualSense controller. It is used to read all input data.\\
+This struct represents the parsed form of the raw input state from a DualSense controller. It is used to easily read input data from your own programs.\\
 
 \tbly{\hyperref[APIRef_Types_analstick]{AnalogStick}}{leftStick}{Represents the position of the left analog stick.}\\
 
 \tbly{\hyperref[APIRef_Types_analstick]{AnalogStick}}{rightStick}{Represents the position of the right analog stick.}\\
 
+\tbly{Bitmask / uint32\_t}{buttonsMap}{Bitmask of all binary buttons. Check individual button states by doing bitwise \& with button flag macros.}\\
+
 \tbly{uint8\_t}{leftTrigger}{8-Bit position of the left trigger. No dead zones required!}\\
 
 \tbly{uint8\_t}{rightTrigger}{8-Bit position of the right trigger. No dead zones required!}\\
 
-\tbly{Bitmask / uint8\_t}{buttonsAndDpad}{Bitmask of the PlayStation button and the DPAD. Check the active state with the \texttt{DS5W\_ISTATE\_BTX\_XXXXX} and \texttt{DS5W\_ISTATE\_DPAD\_XXXXX} macros.}\\
+\tbly{\hyperref[APIRef_Types_vec3]{Vector3}}{accelerometer}{Positional acceleration vector (m/s).}\\
 
-\tbly{Bitmask / uint8\_t}{buttonsA}{Bitmask of the controllers buttons (Set A). Check the active state with the \texttt{DS5W\_ISTATE\_BTN\_A\_XXXXX} macros.}\\
-
-\tbly{Bitmask / uint8\_t}{buttonsB}{Bitmask of the controllers buttons (Set B). Check the active state with the \texttt{DS5W\_ISTATE\_BTN\_B\_XXXXX} macros.}\\
-
-\tbly{\hyperref[APIRef_Types_vec3]{Vector3}}{accelerometer}{Acceleration vector.}\\
-
-\tbly{\hyperref[APIRef_Types_vec3]{Vector3}}{gyroscope}{Orientation vector.}\\
+\tbly{\hyperref[APIRef_Types_vec3]{Vector3}}{gyroscope}{Angular velocity vector (degrees/s).}\\
 
 \tbly{\hyperref[APIRef_Types_touch]{Touch}}{touchPoint1}{First touch point.}\\
 
@@ -250,12 +267,13 @@ This struct represents the input state of a DualSense controller. It is used to 
 
 \tbly{uint32\_t}{deltaTime}{Time since the previous input state was read (measured in 0.33 microseconds)}\\
 
+\tbly{\hyperref[APIRef_Types_battery]{Battery}}{battery}{Battery info.}\\
+
 \tbly{bool}{headPhoneConnected}{Indicates weather a plug is present in the headphone jack. Will also trigger on an extension cord with no headphone connected!}\\
 
 \tbly{uint8\_t}{leftTriggerFeedback}{Indicates the pressing force when the left adaptive trigger is active.}\\
 
 \tbly{uint8\_t}{rightTriggerFeedback}{Indicates the pressing force when the right adaptive trigger is active.}\\
-
 
 \paragraph{DS5OutputState}
 This struct represents the output state of a DualSense controller. It is used to set all output data. \\
@@ -282,7 +300,11 @@ This struct represents the output state of a DualSense controller. It is used to
 \subsection{Functions}
 
 \paragraph{DS5W::enumDevices(...)}
-Enumerate all connected controllers.\\
+Fill array with enumerable list of DualSense devices.\\
+
+
+\paragraph{DS5W::enumUnknownDevices(...)}
+Fill array with enumerable list of DualSense devices without doubles by passing in an array of known device IDs\\
 
 
 \paragraph{DS5W::initDeviceContext(...)}
@@ -290,19 +312,35 @@ Initializes the context for a specific controller.\\
 
 
 \paragraph{DS5W::freeDeviceContext(...)}
-Frees a context from a controller witch is no longer required.\\
+Frees a context from a controller witch is no longer required. Context cannot be reconnected and must be re-enumerated to be used again.\\
+
+
+\paragraph{DS5W::shutDownDevice(...)}
+Takes a working DualSense controller and releases it in Windows but does not forget it. Device can be reconnected again.\\
 
 
 \paragraph{DS5W::reconnectDevice(...)}
-Trys to reconnect a removed device.\\
+Tries to reconnect a disconnected device. Device could have been lost due to a shutdown or been unplugged.\\
 
 
 \paragraph{DS5W::getDeviceInputState(...)}
-Retrieve the current input state of the device.\\
+Retrieve the current input state of the device. Blocks thread for up to 100 milliseconds until input is received and parsed.\\
 
 
 \paragraph{DS5W::setDeviceOutputState(...)}
-Sets the desired output state of the device.\\
+Sets the desired output state of the device.  Blocks thread for up to 100 milliseconds until output is parsed and sent.\\
+
+
+\paragraph{DS5W::startInputRequest(...)}
+Begin a non-blocking request for an input report. Returns whether report was read instantly, or Windows is waiting for next report.\\
+
+
+\paragraph{DS5W::awaitInputRequest(...)}
+Blocks thread until previous input request was fulfilled (or timeout). \\
+
+
+\paragraph{DS5W::getHeldInputState(...)}
+Parses internal buffer into an input state. Uses whatever content was last read. Intended for use after startInputRequest/getHeldInputState.\\
 
 
 \paragraph{DS5W::color\_R32G32B32\_FLOAT(...)} 

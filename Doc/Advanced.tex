@@ -1,0 +1,80 @@
+\section{Advanced Examples}
+In this section some more advanced features will be explained with examples.
+
+\subsection{Enumerate Unknown Devices}
+During your program you may wish to check for new DualSense controllers which have been connected since the program began. The quick start guide shows how to use \texttt{DS5W::enumDevices(...)} to get a list of controllers, but this function lists all DualSense controllers not just the new ones. To solve this problem the API generates a unique ID for every controller and stores it in \texttt{DS5W::DeviceEnumInfo}. Once all the IDs of known controllers are placed in an array, a pointer to the array and the count of known controllers can be used to call \texttt{DS5W::enumKnownDevices(...)} which gets a list of devices excluding those with IDs found in the input array.
+
+\begin{minipage}{\textwidth}
+\begin{lstlisting}[language=C++,label=advcode1,caption={Enumerate Unknown Controllers}]{Enumerate Unknown Controllers}
+	// ...
+	// Following on from original example of Enumerate Devices
+	// some time has passed and new devices might have been connected
+
+	unsigned int numKnownDevices = controllersCount;
+	unsigned int* knownIDs = new unsigned int[numKnownDevices];
+	for (int i = 0; i < controllersCount; i++) {
+		knownIDs[i] = infos[i]._internal.uniqueID;
+	}
+
+	// Call enumerate function again with extra parameters and switch on return value
+	// start of buffer is now after found devices
+	// remaining size has shrunk
+	switch (DS5W::enumUnknownDevices(&infos[numKnownDevices], 16 - numKnownDevices, knownIDs, numKnownDevices, &controllersCount)) {
+	case DS5W_OK:
+		// Can ignore, just there were more controllers found than slots in the buffer
+	case DS5W_E_INSUFFICIENT_BUFFER:
+		break;
+		// Any other error will terminate the application
+	default:
+		// Insert your error handling
+		return -1;
+	}
+
+    delete[] knownIDs;
+
+	// total num devices has increased
+	numKnownDevices += controllersCount;
+// ...
+\end{lstlisting}
+\end{minipage}
+
+\subsection{Overlapped IO}
+Reading and writing to the device blocks the calling thread until the request is fulfilled. To try and reduce the amount of time waiting overlapped IO can be used. Overlapped functions allow running other code while the IO request is processed in the background by the OS. It has only been implemented here for input as output does not seem to cause bottlenecks.\\
+\\
+As a note, the term "input report" means the raw input data straight from the controller. An "input state" is the processed version outputted by this API.
+
+\begin{minipage}{\textwidth}
+\begin{lstlisting}[language=C++,label=advcode2,caption={Overlapped IO}]{Overlapped IO}
+	// Input state
+	DS5W::DS5InputState inState;
+
+	while (true) {
+		// start request for input report
+		DS5W_ReturnValue err = DS5W::startInputRequest(&con);
+
+		// request has started but could have failed already
+		// check if needed
+
+		// can run code while waiting 
+		// don't run code longer than the device polling rate as that will add latency
+		DoExtraWork();
+
+		// The pending error says that the request started, but did not finish instantly
+		// wait for it to finish here
+		if (err == DS5W_E_IO_PENDING) {
+			// will get a new error code too
+			err = DS5W::awaitInputRequest(&con);
+		}
+
+		// Check that request completed correctly
+		if (DS5W_SUCCESS(err)) {
+			// get the newly recieved input state
+			DS5W::getHeldInputState(&con, &inState);
+
+			// can continue as normal now
+			// ...
+		}
+	}
+// ...
+\end{lstlisting}
+\end{minipage}

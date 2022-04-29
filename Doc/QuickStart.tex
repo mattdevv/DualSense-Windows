@@ -35,7 +35,7 @@ int main(int argc, char** argv){
 	// Call enumerate function and switch on return value
 	switch(DS5W::enumDevices(infos, 16, &controllersCount)){
 		case DS5W_OK:
-		// The buffer was not big enough. Ignore for now
+		// Can ignore, just there were more controllers found than slots in the buffer
 		case DS5W_E_INSUFFICIENT_BUFFER:
 			break;
 			
@@ -49,7 +49,7 @@ int main(int argc, char** argv){
 \end{minipage}
 
 \subsection{Selecting a controller}
-In this example we will select the first controller found. To enable a controller it is required to create a \texttt{DS5W::DeviceContext} context for it. The context will be initialized by the function call \texttt{DS5W::initDeviceContext(...)}. It is required to shutdown the controller after usage by calling \\
+In this example we will select the first controller found to connect to. To enable a controller it is required to create a \texttt{DS5W::DeviceContext} context for it. The context will be initialized by the function call \texttt{DS5W::initDeviceContext(...)}. It is required to shutdown the controller after usage by calling \\
 \texttt{DS5W::freeDeviceContext(...)}.\\
 
 \begin{minipage}{\textwidth}
@@ -90,8 +90,8 @@ while(true){
 	
 	// Retrieve data
 	if (DS5W_SUCCESS(DS5W::getDeviceInputState(&con, &inState))){
-		// Check for the Logo button
-		if(inState.buttonsB & DS5W_ISTATE_BTN_B_PLAYSTATION_LOGO){
+		// Check if the PS button flag is set on
+		if (inState.buttonMap & DS5W_ISTATE_BTN_SELECT){
 			// Break from while loop
 			break;
 		}
