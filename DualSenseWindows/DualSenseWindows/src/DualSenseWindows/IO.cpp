@@ -96,46 +96,42 @@ DS5W_API DS5W_ReturnValue DS5W::enumDevices(void* ptrBuffer, UINT inArrLength, U
 				// Skip devices with wrong IDs
 				if (CheckDeviceAttributes(deviceHandle, SONY_CORP_VENDOR_ID, DUALSENSE_CONTROLLER_PROD_ID))
 				{
-					// skip if the output array is full
-					if (inputArrIndex < inArrLength) {
+					// Get valid pointer to target
+					DS5W::DeviceEnumInfo* ptrInfo = nullptr;
+					if (pointerToArray) {
+						ptrInfo = &(((DS5W::DeviceEnumInfo*)ptrBuffer)[inputArrIndex]);
+					}
+					else {
+						ptrInfo = (((DS5W::DeviceEnumInfo**)ptrBuffer)[inputArrIndex]);
+					}
 
-						// Get valid pointer to target
-						DS5W::DeviceEnumInfo* ptrInfo = nullptr;
-						if (pointerToArray) {
-							ptrInfo = &(((DS5W::DeviceEnumInfo*)ptrBuffer)[inputArrIndex]);
-						}
-						else {
-							ptrInfo = (((DS5W::DeviceEnumInfo**)ptrBuffer)[inputArrIndex]);
-						}
+					USHORT inputReportLength = GetDeviceInputReportSize(deviceHandle);
 
-						USHORT inputReportLength = GetDeviceInputReportSize(deviceHandle);
+					// Check if controller matches USB specifications
+					if (inputReportLength == DS_INPUT_REPORT_USB_SIZE) {
+						// Bluetooth device found and valid -> copy variables and increment index
+						ptrInfo->_internal.connection = DS5W::DeviceConnection::USB;
+						wcscpy_s(ptrInfo->_internal.path, 260, (const wchar_t*)devicePath->DevicePath);
 
-						// Check if controller matches USB specifications
-						if (inputReportLength == DS_INPUT_REPORT_USB_SIZE) {
-							// Bluetooth device found and valid -> copy variables and increment index
-							ptrInfo->_internal.connection = DS5W::DeviceConnection::USB;
-							wcscpy_s(ptrInfo->_internal.path, 260, (const wchar_t*)devicePath->DevicePath);
+						// Create unique identifier from device path
+						unsigned int hashedPath;
+						MurmurHash3_x86_32((void*)devicePath->DevicePath, requiredSize, ID_HASH_SEED, &hashedPath);
+						ptrInfo->_internal.uniqueID = hashedPath;
 
-							// Create unique identifier from device path
-							unsigned int hashedPath;
-							MurmurHash3_x86_32((void*)devicePath->DevicePath, requiredSize, ID_HASH_SEED, &hashedPath);
-							ptrInfo->_internal.uniqueID = hashedPath;
+						inputArrIndex++;
+					}
+					// Check if controler matches BT specifications
+					else if (inputReportLength == DS_INPUT_REPORT_BT_SIZE) {
+						// USB device found and valid -> copy variables and increment index
+						ptrInfo->_internal.connection = DS5W::DeviceConnection::BT;
+						wcscpy_s(ptrInfo->_internal.path, 260, (const wchar_t*)devicePath->DevicePath);
 
-							inputArrIndex++;
-						}
-						// Check if controler matches BT specifications
-						else if (inputReportLength == DS_INPUT_REPORT_BT_SIZE) {
-							// USB device found and valid -> copy variables and increment index
-							ptrInfo->_internal.connection = DS5W::DeviceConnection::BT;
-							wcscpy_s(ptrInfo->_internal.path, 260, (const wchar_t*)devicePath->DevicePath);
+						// Create unique identifier from device path
+						unsigned int hashedPath;
+						MurmurHash3_x86_32((void*)devicePath->DevicePath, requiredSize, ID_HASH_SEED, &hashedPath);
+						ptrInfo->_internal.uniqueID = hashedPath;
 
-							// Create unique identifier from device path
-							unsigned int hashedPath;
-							MurmurHash3_x86_32((void*)devicePath->DevicePath, requiredSize, ID_HASH_SEED, &hashedPath);
-							ptrInfo->_internal.uniqueID = hashedPath;
-
-							inputArrIndex++;
-						}
+						inputArrIndex++;
 					}
 				}
 
@@ -199,7 +195,7 @@ DS5W_API DS5W_ReturnValue DS5W::enumUnknownDevices(void* ptrBuffer, UINT inArrLe
 	DWORD devIndex = 0;
 	SP_DEVINFO_DATA hidDiInfo;
 	hidDiInfo.cbSize = sizeof(SP_DEVINFO_DATA);
-	while (SetupDiEnumDeviceInfo(hidDiHandle, devIndex, &hidDiInfo)) {
+	while (inputArrIndex < inArrLength && SetupDiEnumDeviceInfo(hidDiHandle, devIndex, &hidDiInfo)) {
 
 		// Enumerate over all hid device interfaces
 		DWORD ifIndex = 0;
@@ -243,38 +239,34 @@ DS5W_API DS5W_ReturnValue DS5W::enumUnknownDevices(void* ptrBuffer, UINT inArrLe
 					// skip devices which are already known
 					if (!inArray(hashedPath, knownDeviceIDs, numKnownDevices))
 					{
-						// skip if output buffer is full
-						if (inputArrIndex < inArrLength) {
+						// Get pointer to target
+						DS5W::DeviceEnumInfo* ptrInfo = nullptr;
+						if (pointerToArray) {
+							ptrInfo = &(((DS5W::DeviceEnumInfo*)ptrBuffer)[inputArrIndex]);
+						}
+						else {
+							ptrInfo = (((DS5W::DeviceEnumInfo**)ptrBuffer)[inputArrIndex]);
+						}
 
-							// Get pointer to target
-							DS5W::DeviceEnumInfo* ptrInfo = nullptr;
-							if (pointerToArray) {
-								ptrInfo = &(((DS5W::DeviceEnumInfo*)ptrBuffer)[inputArrIndex]);
-							}
-							else {
-								ptrInfo = (((DS5W::DeviceEnumInfo**)ptrBuffer)[inputArrIndex]);
-							}
+						USHORT inputReportLength = GetDeviceInputReportSize(deviceHandle);
 
-							USHORT inputReportLength = GetDeviceInputReportSize(deviceHandle);
+						// Check if controller matches USB specifications
+						if (inputReportLength == DS_INPUT_REPORT_USB_SIZE) {
+							// Bluetooth device found and valid -> copy variables and increment index
+							ptrInfo->_internal.connection = DS5W::DeviceConnection::USB;
+							wcscpy_s(ptrInfo->_internal.path, 260, (const wchar_t*)devicePath->DevicePath);
+							ptrInfo->_internal.uniqueID = hashedPath;
 
-							// Check if controller matches USB specifications
-							if (inputReportLength == DS_INPUT_REPORT_USB_SIZE) {
-								// Bluetooth device found and valid -> copy variables and increment index
-								ptrInfo->_internal.connection = DS5W::DeviceConnection::USB;
-								wcscpy_s(ptrInfo->_internal.path, 260, (const wchar_t*)devicePath->DevicePath);
-								ptrInfo->_internal.uniqueID = hashedPath;
+							inputArrIndex++;
+						}
+						// Check if controler matches BT specifications
+						else if (inputReportLength == DS_INPUT_REPORT_BT_SIZE) {
+							// USB device found and valid -> copy variables and increment index
+							ptrInfo->_internal.connection = DS5W::DeviceConnection::BT;
+							wcscpy_s(ptrInfo->_internal.path, 260, (const wchar_t*)devicePath->DevicePath);
+							ptrInfo->_internal.uniqueID = hashedPath;
 
-								inputArrIndex++;
-							}
-							// Check if controler matches BT specifications
-							else if (inputReportLength == DS_INPUT_REPORT_BT_SIZE) {
-								// USB device found and valid -> copy variables and increment index
-								ptrInfo->_internal.connection = DS5W::DeviceConnection::BT;
-								wcscpy_s(ptrInfo->_internal.path, 260, (const wchar_t*)devicePath->DevicePath);
-								ptrInfo->_internal.uniqueID = hashedPath;
-
-								inputArrIndex++;
-							}
+							inputArrIndex++;
 						}
 					}
 				}
