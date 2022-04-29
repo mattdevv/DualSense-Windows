@@ -2,7 +2,7 @@
 
 
 
-Windows API for the PS5 DualSense controller written in C++ for C++ and C#. 
+C++ Windows API for the PS5 DualSense controller written for C++ and C#. 
 
 ## Features
 
@@ -11,15 +11,15 @@ Windows API for the PS5 DualSense controller written in C++ for C++ and C#.
 - Reading the two finger touchpad positions
 - Reading the accelerometer and gyroscope with device calibration
 - Reading the battery level
-- Access to the controller's internal timer
 - Controlling the left and right haptic feedback with variable strength
 - Controlling the adaptive triggers and reading back the users force while active
 - Controlling the RGB color of the lightbar
-- Setting the player indication LEDs and the microphone LED
+- Controlling the player indication LEDs and the microphone LED
+- Access to the controller's internal timer
 
 ## Using the API
 
-This is the minimal example on how to use the library, a more in-depth example is included as a separate VS project (DS5W_Test).
+This is the minimal example on how to use the library, for an in-depth look see the included documentation PDF.
 
 ```c++
 #include <Windows.h>
@@ -109,4 +109,3 @@ I have partially used the following sources to implement the functionality:
 
 
 [Important Informations about Trademarks](https://github.com/mattdevv/DualSense-Windows/blob/main/TRADEMARKS.md)
-
