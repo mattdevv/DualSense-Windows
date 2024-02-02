@@ -98,19 +98,9 @@ void __DS5W::Input::evaluateHidInputBuffer(unsigned char* hidInBuffer, DS5W::DS5
 	ptrContext->_internal.timestamp = currentTime;
 
 	// Battery
-	unsigned char batteryData = hidInBuffer[0x34];
-	bool batteryFull = (batteryData & 0x20) != 0;
-	unsigned char batteryLevel = 100;
-
-	if (!batteryFull)
-	{
-		// calculate partial charge
-		batteryLevel = min((batteryData & 0x0F) * 10 + 5, 100);
-	}
-
 	ptrInputState->battery.charging = (hidInBuffer[0x35] & 0x08) != 0;
-	ptrInputState->battery.fullyCharged = batteryFull;
-	ptrInputState->battery.level = batteryLevel;
+	ptrInputState->battery.fullyCharged = (hidInBuffer[0x34] & 0x20) != 0;
+	ptrInputState->battery.level = ((hidInBuffer[0x34] & 0x0F) * 100) / 8;
 }
 
 void __DS5W::Input::parseCalibrationData(DS5W::DeviceCalibrationData* ptrCalibrationData, short* data)
